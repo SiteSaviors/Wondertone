@@ -1,3 +1,7 @@
+/**
+ * @vitest-environment jsdom
+ */
+import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { SubscriptionSection } from '@/pages/PricingPage';
@@ -30,6 +34,6 @@ describe('SubscriptionSection', () => {
     );
 
     expect(screen.getByText(/Wondertone Free/i)).toBeInTheDocument();
-    expect(screen.getByText(/Creator/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Creator/i).length).toBeGreaterThan(0);
   });
 });

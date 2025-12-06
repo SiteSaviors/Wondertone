@@ -122,15 +122,13 @@ const uploadPipelineStateMock = {
   orientationPreviewPending: false,
 };
 
-const computedTotalValue = 199;
-
 vi.mock('@/store/hooks/useFounderCanvasStore', () => ({
   useCanvasModalState: (selector: (state: typeof canvasModalStateMock) => unknown) => selector(canvasModalStateMock),
   useUploadPipelineState: (selector: (state: typeof uploadPipelineStateMock) => unknown) => selector(uploadPipelineStateMock),
   useCanvasConfigState: (selector: (state: typeof canvasConfigStateMock & { computedTotal: () => number }) => unknown) =>
     selector({
       ...canvasConfigStateMock,
-      computedTotal: () => computedTotalValue,
+      computedTotal: () => computedTotalMock(),
     }),
 }));
 

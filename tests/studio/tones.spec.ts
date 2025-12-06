@@ -12,6 +12,9 @@ const createEntitlements = (
   tier,
   quota: 20,
   remainingTokens: 10,
+  premiumTokens: null,
+  freeMonthlyTokens: null,
+  hasPremiumAccess: tier !== 'free',
   requiresWatermark: tier === 'free',
   priority: tier === 'pro' ? 'pro' : tier === 'creator' || tier === 'plus' ? 'priority' : 'normal',
   renewAt: null,
@@ -20,14 +23,12 @@ const createEntitlements = (
   ...overrides,
 });
 
-const getStyleId = (tone: StyleTone, fallbackId: string): string => {
-  const match = STYLE_CORE_METADATA.find((entry) => entry.tone === tone);
-  return match?.id ?? fallbackId;
-};
-
 describe('Tone gating regression', () => {
-  const freeStyleId = getStyleId('classic', 'classic-oil-painting');
-  const premiumStyleId = getStyleId('signature', 'sanctuary-glow');
+  const freeStyleId =
+    STYLE_CORE_METADATA.find((entry) => entry.tone === 'classic' && entry.tier === 'free')?.id ??
+    'classic-oil-painting';
+  const premiumStyleId =
+    STYLE_CORE_METADATA.find((entry) => entry.tier === 'premium')?.id ?? 'sanctuary-glow';
 
   const authenticatedUser: SessionUser = {
     id: 'user-free',

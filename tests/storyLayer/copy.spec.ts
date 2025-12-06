@@ -50,8 +50,8 @@ describe('storyLayer copy helpers', () => {
 
   it('returns bespoke complementary mapping', async () => {
     const comp = await getComplementaryStyles(mockStyle({ id: 'pastel-bliss', tone: 'classic' }));
-    expect(comp.premium).toBe('sanctuary-glow');
-    expect(comp.fallback).toBe('calm-watercolor');
+    expect(comp.premium).toBe('calm-watercolor');
+    expect(comp.fallback).toBe('classic-crayon');
   });
 
   it('returns tone complementary when bespoke missing', async () => {

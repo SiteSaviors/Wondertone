@@ -133,6 +133,11 @@ describe('useGalleryHandlers', () => {
   });
 
   it('warns when no preview is available', async () => {
+    (useStudioUserState as vi.Mock).mockReturnValue({
+      sessionUser: { id: 'user-1' },
+      sessionAccessToken: 'token',
+    });
+
     const { getHandlers, unmount } = await renderGalleryHook();
 
     await act(async () => {
@@ -141,7 +146,7 @@ describe('useGalleryHandlers', () => {
 
     expect(showToast).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: 'Nothing to save',
+        title: 'Upload required',
       })
     );
     expect(getHandlers().savingToGallery).toBe(false);

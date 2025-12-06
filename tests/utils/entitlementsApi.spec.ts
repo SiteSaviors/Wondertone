@@ -6,6 +6,9 @@ type MockEntitlementRow = {
   tier: string;
   tokens_quota: number | string | null;
   remaining_tokens: number | string | null;
+  premium_tokens?: number | string | null;
+  free_monthly_tokens?: number | string | null;
+  has_premium_access?: boolean | string | null;
   period_end: string | null;
   dev_override: boolean | string | null;
 };
@@ -42,6 +45,9 @@ describe('fetchAuthenticatedEntitlements', () => {
         tier: 'free',
         quota: 10,
         remainingTokens: 7,
+        premiumTokens: 7,
+        freeMonthlyTokens: null,
+        hasPremiumAccess: false,
         renewAt: '2024-11-01T00:00:00Z',
         priority: 'normal',
         requiresWatermark: true,
@@ -61,6 +67,9 @@ describe('fetchAuthenticatedEntitlements', () => {
         tier: 'creator',
         quota: 50,
         remainingTokens: 25,
+        premiumTokens: 25,
+        freeMonthlyTokens: null,
+        hasPremiumAccess: true,
         renewAt: '2024-11-01T00:00:00Z',
         priority: 'priority',
         requiresWatermark: false,
@@ -80,6 +89,9 @@ describe('fetchAuthenticatedEntitlements', () => {
         tier: 'plus',
         quota: 250,
         remainingTokens: 200,
+        premiumTokens: 200,
+        freeMonthlyTokens: null,
+        hasPremiumAccess: true,
         renewAt: '2024-11-01T00:00:00Z',
         priority: 'priority',
         requiresWatermark: false,
@@ -99,6 +111,9 @@ describe('fetchAuthenticatedEntitlements', () => {
         tier: 'pro',
         quota: 250,
         remainingTokens: 240,
+        premiumTokens: 240,
+        freeMonthlyTokens: null,
+        hasPremiumAccess: true,
         renewAt: '2024-11-01T00:00:00Z',
         priority: 'pro',
         requiresWatermark: false,
@@ -130,6 +145,9 @@ describe('fetchAuthenticatedEntitlements', () => {
       tier: 'dev',
       quota: 1000,
       remainingTokens: 900,
+      premiumTokens: 900,
+      freeMonthlyTokens: null,
+      hasPremiumAccess: true,
       renewAt: '2024-12-01T00:00:00Z',
       priority: 'pro',
       requiresWatermark: false,

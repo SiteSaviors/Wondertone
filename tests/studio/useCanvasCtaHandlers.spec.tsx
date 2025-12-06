@@ -25,13 +25,14 @@ vi.mock('@/store/hooks/useEntitlementsStore', () => ({
 
 vi.mock('@/utils/telemetry', () => ({
   trackOrderStarted: vi.fn(),
+  trackRuntimeMetric: vi.fn(),
 }));
 
 const { useStudioPreviewState } = await import('@/store/hooks/studio/useStudioPreviewState');
 const { trackStudioV2CanvasCtaClick, trackStudioV2OrientationCta } = await import('@/utils/studioV2Analytics');
 const { useCanvasConfigState } = await import('@/store/hooks/useFounderCanvasStore');
 const { useEntitlementsState } = await import('@/store/hooks/useEntitlementsStore');
-const { trackOrderStarted } = await import('@/utils/telemetry');
+const { trackOrderStarted, trackRuntimeMetric } = await import('@/utils/telemetry');
 
 describe('useCanvasCtaHandlers', () => {
   const defaultPreviewState = {
@@ -97,6 +98,7 @@ describe('useCanvasCtaHandlers', () => {
     vi.useFakeTimers();
     trackStudioV2CanvasCtaClick.mockClear();
     trackStudioV2OrientationCta.mockClear();
+    trackRuntimeMetric.mockClear();
     setupPreviewState();
     const computedTotal = vi.fn().mockReturnValue(249);
     (useCanvasConfigState as vi.Mock).mockReturnValue({
