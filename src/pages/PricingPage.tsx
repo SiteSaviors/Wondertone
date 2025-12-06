@@ -11,157 +11,11 @@ import PricingSection from '@/components/ui/PricingSection';
 import { useAuthModal } from '@/store/useAuthModal';
 import { useEntitlementsActions, useEntitlementsState } from '@/store/hooks/useEntitlementsStore';
 import { useSessionState } from '@/store/hooks/useSessionStore';
-import { createCheckoutSession, createOrderCheckoutSession } from '@/utils/checkoutApi';
-import { trackPricingToggle, trackTokenPackCheckoutStart } from '@/utils/telemetry';
-
-type TierId = 'free' | 'creator' | 'plus' | 'pro';
-
-type Tier = {
-  id: TierId;
-  name: string;
-  price: string;
-  priceDetail: string;
-  tokensPerMonth: number;
-  tokensLabel?: string;
-  features: string[];
-  gradient: string;
-};
-
-const FREE_TIER: Tier = {
-  id: 'free',
-  name: 'Wondertone Free',
-  price: '$0',
-  priceDetail: 'Forever',
-  tokensPerMonth: 10,
-  tokensLabel: 'Tokens',
-  features: [
-    'Watermarked previews',
-    'Living Canvas demo access',
-    'Smart style recommendations',
-    'Community momentum feed',
-  ],
-  gradient: 'from-[#1f243b] via-[#1a1f38] to-[#171a2f]',
-};
-
-const PREMIUM_TIERS: Tier[] = [
-  {
-    id: 'creator',
-    name: 'Creator',
-    price: '$7.99',
-    priceDetail: 'per month',
-    tokensPerMonth: 50,
-    tokensLabel: 'Tokens',
-    features: [
-      '50 premium generations each month',
-      'Watermark-free previews & HD downloads',
-      'Living Canvas AR downloads',
-      'Priority notifications from Wondertone queues',
-      'Creator badge inside Studio & marketplace',
-    ],
-    gradient: 'from-[#6c3df2]/85 via-[#4a50ff]/85 to-[#1ca7ff]/85',
-  },
-  {
-    id: 'plus',
-    name: 'Plus',
-    price: '$19.99',
-    priceDetail: 'per month',
-    tokensPerMonth: 150,
-    tokensLabel: 'Tokens',
-    features: [
-      '150 premium generations per month',
-      'Batch clean + watermarked exports',
-      'Shared brand assets & style kits',
-      'Dedicated live preview operator tools',
-      'Priority queue (2× speed boost)',
-    ],
-    gradient: 'from-[#31a8ff]/85 via-[#09d3ef]/80 to-[#26f0b9]/80',
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: '$49.99',
-    priceDetail: 'per month',
-    tokensPerMonth: 400,
-    tokensLabel: 'Tokens',
-    features: [
-      '400 premium generations per month',
-      'Wondertone concierge & white-label support',
-      'Real-time teleprompter prompts for live events',
-      'Priority queue (3× speed boost)',
-      'Guaranteed Living Canvas production in 48h',
-    ],
-    gradient: 'from-[#ffa62e]/85 via-[#ff6b45]/85 to-[#f63b81]/85',
-  },
-];
-
-type TokenPack = {
-  id: string;
-  name: string;
-  sku: string;
-  tokens: number;
-  price: string;
-  badge?: string;
-  bullets: string[];
-  gradient: string;
-  ctaLabel: string;
-};
-
-const TOKEN_PACKS: TokenPack[] = [
-  {
-    id: 'pack-25',
-    name: 'Explorer Pack',
-    sku: 'token_pack_25',
-    tokens: 25,
-    price: '$4.99',
-    priceCents: 499,
-    badge: 'One-time purchase',
-    bullets: [
-      '25 premium tokens',
-      'No expiration date',
-      'Access to all Wondertone styles',
-      'Full HD & 4K outputs',
-      'Enhanced queue placement',
-    ],
-    gradient: 'from-[#9c5bff]/50 via-[#6c63ff]/60 to-[#32d6ff]/50',
-    ctaLabel: 'Buy 25 Tokens',
-  },
-  {
-    id: 'pack-50',
-    name: 'Studio Pack',
-    sku: 'token_pack_50',
-    tokens: 50,
-    price: '$9.99',
-    priceCents: 999,
-    badge: 'Most popular',
-    bullets: [
-      '50 premium tokens',
-      'No expiration date',
-      'Priority access to premium styles',
-      'Full HD & 4K outputs',
-      'Enhanced queue placement',
-    ],
-    gradient: 'from-[#31a8ff]/60 via-[#09d3ef]/60 to-[#26f0b9]/50',
-    ctaLabel: 'Buy 50 Tokens',
-  },
-  {
-    id: 'pack-100',
-    name: 'Creator Reserve',
-    sku: 'token_pack_100',
-    tokens: 100,
-    price: '$17.99',
-    priceCents: 1799,
-    badge: 'Best value',
-    bullets: [
-      '100 premium tokens',
-      'No expiration date',
-      'Access to all Wondertone styles',
-      'Full HD & 4K outputs',
-      'Enhanced queue placement',
-    ],
-    gradient: 'from-[#ffa62e]/60 via-[#ff6b45]/65 to-[#f63b81]/55',
-    ctaLabel: 'Buy 100 Tokens',
-  },
-];
+import { createCheckoutSession } from '@/utils/checkoutApi';
+import { trackPricingToggle } from '@/utils/telemetry';
+import { TOKEN_PACKS } from '@/data/tokenPacks';
+import { FREE_TIER, PREMIUM_TIERS, type SubscriptionTier, type TierId } from '@/data/subscriptionTiers';
+import useTokenPackCheckout from '@/hooks/useTokenPackCheckout';
 
 const buildCheckoutUrl = (type: 'subscription' | 'token_pack', status: 'success' | 'cancelled') => {
   if (typeof window === 'undefined') return '/pricing';
@@ -273,7 +127,6 @@ const TokenPackSection = ({
 
 const PricingPage = () => {
   const PENDING_CHECKOUT_TIER_KEY = 'wt_pending_checkout_tier';
-  const PENDING_TOKEN_PACK_KEY = 'wt_pending_token_pack';
   const { entitlements } = useEntitlementsState();
   const { sessionUser, accessToken } = useSessionState();
   const { hydrateEntitlements } = useEntitlementsActions();
@@ -281,11 +134,18 @@ const PricingPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [pricingMode, setPricingMode] = useState<PricingMode>('subscription');
+  const [pricingMode, setPricingMode] = useState<PricingMode>(() => deriveModeFromQuery(location.search));
   const [loadingTier, setLoadingTier] = useState<TierId | null>(null);
-  const [loadingTokenPackId, setLoadingTokenPackId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const { startCheckout: startTokenPackCheckout, loadingPackId: loadingTokenPackId, resumePendingCheckout } =
+    useTokenPackCheckout({
+      sessionUser,
+      accessToken,
+      promptAuth: () => openAuthModal('signup', { source: 'pricing' }),
+      buildCheckoutUrl,
+    });
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -390,78 +250,28 @@ const PricingPage = () => {
     },
     []
   );
+  useEffect(() => {
+    const nextMode = deriveModeFromQuery(location.search);
+    setPricingMode((current) => (current === nextMode ? current : nextMode));
+  }, [location.search]);
 
   const handleSelectTokenPack = useCallback(
     async (packId: string) => {
-      const pack = TOKEN_PACKS.find((tokenPack) => tokenPack.id === packId);
-      if (!pack) return;
-
       setErrorMessage(null);
       setSuccessMessage(null);
-
-      trackTokenPackCheckoutStart({
-        packId: pack.id,
-        tokens: pack.tokens,
-        priceCents: pack.priceCents,
-      });
-
-      if (!sessionUser) {
-        try {
-          window.sessionStorage.setItem(PENDING_TOKEN_PACK_KEY, packId);
-        } catch {
-          // ignore storage issues
-        }
-        openAuthModal('signup', { source: 'pricing' });
-        return;
-      }
-
       try {
-        setLoadingTokenPackId(packId);
-        const { url } = await createOrderCheckoutSession({
-          items: [
-            {
-              name: pack.name,
-              description: `${pack.tokens} Wondertone tokens`,
-              amount: pack.priceCents,
-              quantity: 1,
-            },
-          ],
-          accessToken,
-          metadata: {
-            purchaseType: 'token_pack',
-            sku: pack.sku,
-          },
-          successUrl: buildCheckoutUrl('token_pack', 'success'),
-          cancelUrl: buildCheckoutUrl('token_pack', 'cancelled'),
-        });
-        window.location.href = url;
+        await startTokenPackCheckout(packId);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unable to start checkout. Please try again.';
         setErrorMessage(message);
-      } finally {
-        setLoadingTokenPackId(null);
       }
     },
-    [accessToken, openAuthModal, sessionUser]
+    [startTokenPackCheckout]
   );
 
   useEffect(() => {
-    if (!sessionUser || !accessToken) return;
-    let pendingPack: string | null = null;
-    try {
-      pendingPack = window.sessionStorage.getItem(PENDING_TOKEN_PACK_KEY);
-    } catch {
-      pendingPack = null;
-    }
-    if (pendingPack) {
-      try {
-        window.sessionStorage.removeItem(PENDING_TOKEN_PACK_KEY);
-      } catch {
-        // ignore
-      }
-      void handleSelectTokenPack(pendingPack);
-    }
-  }, [sessionUser, accessToken, handleSelectTokenPack]);
+    void resumePendingCheckout();
+  }, [resumePendingCheckout]);
 
 
   return (
@@ -567,3 +377,11 @@ const PricingPage = () => {
 
 export default PricingPage;
 export { SubscriptionSection };
+const deriveModeFromQuery = (search: string): PricingMode => {
+  const params = new URLSearchParams(search);
+  const modeParam = params.get('mode');
+  if (modeParam === 'payg' || modeParam === 'subscription') {
+    return modeParam;
+  }
+  return 'subscription';
+};

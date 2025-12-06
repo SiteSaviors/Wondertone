@@ -16,6 +16,7 @@ type TierCardProps = {
   isLoading: boolean;
   onSelect: () => void;
   animationDelay?: number;
+  size?: 'default' | 'compact';
 };
 
 // Tier-specific glow effects
@@ -47,6 +48,7 @@ const TierCard = ({
   isLoading,
   onSelect,
   animationDelay = 0,
+  size = 'default',
 }: TierCardProps) => {
   return (
     <div
@@ -69,13 +71,19 @@ const TierCard = ({
       )}
 
       {/* Main card container */}
-      <div className="relative h-full rounded-[32px] border border-white/10 bg-gradient-to-br p-[1px] transition-all duration-300">
+      <div
+        className={clsx(
+          'relative h-full rounded-[32px] border border-white/10 bg-gradient-to-br p-[1px] transition-all duration-300',
+          size === 'compact' && 'rounded-[24px]'
+        )}
+      >
         <div className="pointer-events-none absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-[100%]" />
 
         <div
           className={clsx(
             'relative flex h-full flex-col rounded-[28px] border border-white/10 p-8 shadow-[inset_0_0_40px_rgba(15,23,42,0.45)]',
-            id === 'free' ? 'bg-[#1d2035]/90' : `bg-gradient-to-br ${gradient}`
+            id === 'free' ? 'bg-[#1d2035]/90' : `bg-gradient-to-br ${gradient}`,
+            size === 'compact' && 'rounded-[22px] p-6 text-sm'
           )}
         >
           {isCurrent && (
@@ -94,7 +102,14 @@ const TierCard = ({
             <div className="flex items-start justify-between gap-4">
               <div className="text-left">
                 <p className="text-xs uppercase tracking-[0.3em] text-white/60">Membership</p>
-                <h3 className="mt-1 text-2xl font-semibold leading-tight text-white md:text-3xl">{name}</h3>
+                <h3
+                  className={clsx(
+                    'mt-1 font-semibold leading-tight text-white',
+                    size === 'compact' ? 'text-xl' : 'text-2xl md:text-3xl'
+                  )}
+                >
+                  {name}
+                </h3>
               </div>
               <div
                 className={clsx(
@@ -111,12 +126,14 @@ const TierCard = ({
             </div>
 
             <div className="flex flex-wrap items-baseline gap-3">
-              <span className="text-5xl font-bold tracking-tight text-white">{price}</span>
+              <span className={clsx('font-bold tracking-tight text-white', size === 'compact' ? 'text-4xl' : 'text-5xl')}>
+                {price}
+              </span>
               <span className="text-sm text-white/60">{priceDetail}</span>
             </div>
           </div>
 
-          <ul className="mt-6 flex-1 space-y-3 text-sm text-white/80">
+          <ul className={clsx('mt-6 flex-1 space-y-3 text-sm text-white/80', size === 'compact' && 'space-y-2 text-[13px]')}>
             {features.map((feature, index) => (
               <li key={index} className="flex items-start gap-3">
                 <span
@@ -139,9 +156,10 @@ const TierCard = ({
 
           <Button
             className={clsx(
-              'relative mt-8 flex w-full items-center justify-center overflow-hidden rounded-full py-4 text-sm font-semibold shadow-[0_20px_60px_rgba(0,0,0,0.35)] transition-all duration-300',
+              'relative mt-8 flex w-full items-center justify-center overflow-hidden rounded-full text-sm font-semibold shadow-[0_20px_60px_rgba(0,0,0,0.35)] transition-all duration-300',
               'bg-white text-slate-900 hover:-translate-y-1 hover:shadow-[0_25px_70px_rgba(15,23,42,0.45)]',
-              'disabled:translate-y-0 disabled:opacity-70'
+              'disabled:translate-y-0 disabled:opacity-70',
+              size === 'compact' ? 'py-3 text-xs' : 'py-4'
             )}
             disabled={isCurrent || isLoading}
             onClick={onSelect}

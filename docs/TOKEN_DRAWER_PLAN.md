@@ -40,9 +40,7 @@
    - Create `src/data/tokenPacks.ts` & `src/data/subscriptionTiers.ts`.
    - Implement `useTokenPackCheckout` hook sharing existing logic.
    - Update `PricingPage` to consume the new modules/hook.
-2. **Mini components**
-   - Build `MiniPricingToggle` wrapper component to size down `PricingModeToggle`.
-   - Build `TokenPackRail` + `MiniTierRail` components reusing existing card components with new `size="compact"` props.
+P
 3. **Drawer integration**
    - Replace the placeholder/button sections inside `TokenBalanceDrawer` with the new layout.
    - Wire `useTokenPackCheckout` into the drawer (loading states, errors, pending pack resume).

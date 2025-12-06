@@ -362,6 +362,10 @@ const FounderNavigation = () => {
         renewAt={entitlements.renewAt ?? null}
         onManageMembership={() => setMembershipModalOpen(true)}
         isLoading={entitlementsLoading}
+        sessionUser={sessionUser}
+        accessToken={accessToken}
+        onRequireAuth={() => openNavAuthModal('signup')}
+        currentTierId={entitlements.tier ?? null}
       />
       <MembershipConfirmationModal
         open={membershipModalOpen}

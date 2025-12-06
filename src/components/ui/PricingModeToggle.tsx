@@ -5,6 +5,8 @@ export type PricingMode = 'subscription' | 'payg';
 type PricingModeToggleProps = {
   mode: PricingMode;
   onChange: (mode: PricingMode) => void;
+  className?: string;
+  buttonClassName?: string;
 };
 
 const LABELS: Record<PricingMode, string> = {
@@ -12,7 +14,7 @@ const LABELS: Record<PricingMode, string> = {
   payg: 'Pay As You Go',
 };
 
-const PricingModeToggle = ({ mode, onChange }: PricingModeToggleProps) => {
+const PricingModeToggle = ({ mode, onChange, className, buttonClassName }: PricingModeToggleProps) => {
   const prefersReducedMotion =
     typeof window !== 'undefined' &&
     window.matchMedia &&
@@ -30,7 +32,7 @@ const PricingModeToggle = ({ mode, onChange }: PricingModeToggleProps) => {
   );
 
   return (
-    <div className="inline-flex w-full max-w-md items-center justify-center">
+    <div className={clsx('inline-flex w-full max-w-md items-center justify-center', className)}>
       <div
         role="group"
         aria-label="Pricing mode"
@@ -43,7 +45,8 @@ const PricingModeToggle = ({ mode, onChange }: PricingModeToggleProps) => {
             type="button"
             className={clsx(
               'relative z-10 flex-1 px-4 py-2 transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
-              mode === option ? 'text-slate-950' : 'text-white/70'
+              mode === option ? 'text-slate-950' : 'text-white/70',
+              buttonClassName
             )}
             aria-pressed={mode === option}
             onClick={() => handleClick(option)}

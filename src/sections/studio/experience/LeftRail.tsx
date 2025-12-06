@@ -44,28 +44,8 @@ const LeftRail = () => {
         </div>
       )}
 
-      <Suspense
-        fallback={
-          <StyleSidebarFallback
-            entitlements={{
-              tier: entitlements.tier,
-              status: entitlements.status,
-              remainingTokens: displayRemainingTokens,
-              quota: entitlements.quota,
-            }}
-            hasCroppedImage={hasCroppedImage}
-          />
-        }
-      >
-        <StyleSidebar
-          entitlements={{
-            tier: entitlements.tier,
-            status: entitlements.status,
-            remainingTokens: displayRemainingTokens,
-            quota: entitlements.quota,
-          }}
-          hasCroppedImage={hasCroppedImage}
-        />
+      <Suspense fallback={<StyleSidebarFallback hasCroppedImage={hasCroppedImage} />}>
+        <StyleSidebar hasCroppedImage={hasCroppedImage} />
       </Suspense>
     </>
   );

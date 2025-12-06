@@ -2,8 +2,14 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { X } from 'lucide-react';
-import { memo } from 'react';
-import TokenHistoryMiniList from '@/components/navigation/TokenHistoryMiniList';
+import { memo, useCallback, useEffect, useState } from 'react';
+import MiniPricingToggle from '@/components/ui/MiniPricingToggle';
+import TokenPackRail from '@/components/ui/TokenPackRail';
+import MiniTierRail from '@/components/ui/MiniTierRail';
+import { TOKEN_PACKS } from '@/data/tokenPacks';
+import { PREMIUM_TIERS, type TierId } from '@/data/subscriptionTiers';
+import type { PricingMode } from '@/components/ui/PricingModeToggle';
+import useTokenPackCheckout from '@/hooks/useTokenPackCheckout';
 
 type TokenBalanceDrawerProps = {
   open: boolean;
@@ -13,6 +19,10 @@ type TokenBalanceDrawerProps = {
   renewAt: string | null;
   onManageMembership: () => void;
   isLoading: boolean;
+  sessionUser: unknown;
+  accessToken: string | null;
+  onRequireAuth: () => void;
+  currentTierId: TierId | null;
 };
 
 const formatRenewalDate = (renewAt: string | null) => {
@@ -25,8 +35,48 @@ const formatRenewalDate = (renewAt: string | null) => {
   })}`;
 };
 
-const TokenBalanceDrawerComponent = ({ open, onOpenChange, tierLabel, remainingTokens, renewAt, onManageMembership, isLoading }: TokenBalanceDrawerProps) => {
+const TokenBalanceDrawerComponent = ({
+  open,
+  onOpenChange,
+  tierLabel,
+  remainingTokens,
+  renewAt,
+  onManageMembership,
+  isLoading,
+  sessionUser,
+  accessToken,
+  onRequireAuth,
+  currentTierId,
+}: TokenBalanceDrawerProps) => {
   const tokenDisplay = isLoading ? '—' : remainingTokens == null ? '∞' : Math.max(0, remainingTokens).toString();
+  const [drawerMode, setDrawerMode] = useState<PricingMode>('payg');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const buildCheckoutUrl = useCallback((type: 'token_pack', status: 'success' | 'cancelled') => {
+    if (typeof window === 'undefined') return '/pricing';
+    const params = new URLSearchParams({ checkout: status, type });
+    return `${window.location.origin}/pricing?${params.toString()}`;
+  }, []);
+  const { startCheckout, loadingPackId, resumePendingCheckout } = useTokenPackCheckout({
+    sessionUser,
+    accessToken,
+    promptAuth: onRequireAuth,
+    buildCheckoutUrl,
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    void resumePendingCheckout();
+  }, [open, resumePendingCheckout]);
+
+  const handlePackSelect = async (packId: string) => {
+    setErrorMessage(null);
+    try {
+      await startCheckout(packId);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Unable to start checkout. Please try again.');
+    }
+  };
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -55,7 +105,7 @@ const TokenBalanceDrawerComponent = ({ open, onOpenChange, tierLabel, remainingT
             </button>
           </div>
 
-          <div className="space-y-6 px-6 py-6 text-white">
+          <div className="space-y-6 overflow-y-auto px-6 py-6 text-white">
             <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
               <div className="flex items-center justify-between text-sm text-white/70">
                 <span>Tier</span>
@@ -64,28 +114,47 @@ const TokenBalanceDrawerComponent = ({ open, onOpenChange, tierLabel, remainingT
               <div className={clsx('mt-4 text-sm text-white/60', isLoading && 'animate-pulse text-transparent')}>{isLoading ? '•••' : formatRenewalDate(renewAt)}</div>
             </div>
 
+            <div className="space-y-4 rounded-2xl border border-white/15 bg-white/5 p-4">
+              <MiniPricingToggle mode={drawerMode} onChange={setDrawerMode} />
+  {errorMessage && (
+    <div className="rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-xs text-red-100">
+      {errorMessage}
+    </div>
+  )}
+              {drawerMode === 'payg' ? (
+                <TokenPackRail packs={TOKEN_PACKS} loadingPackId={loadingPackId} onSelectPack={handlePackSelect} />
+              ) : (
+                <MiniTierRail
+                  tiers={PREMIUM_TIERS}
+                  currentTier={currentTierId}
+                  loadingTier={null}
+                  onSelectTier={(_tierId) => {
+                    onOpenChange(false);
+                    onManageMembership();
+                  }}
+                />
+              )}
+            </div>
+
             <div className="flex flex-col gap-3">
-              <button
-                type="button"
-                className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-white/15"
-                onClick={() => {
-                  console.info('[TokenDrawer] Token top-ups coming soon.');
-                }}
-              >
-                Top up tokens (coming soon)
-              </button>
               <button
                 type="button"
                 className="w-full rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-left text-sm font-semibold text-white/80 transition hover:bg-white/10"
                 onClick={() => {
+                  onOpenChange(false);
                   onManageMembership();
                 }}
               >
                 Manage membership
               </button>
+              <Link
+                to="/pricing?mode=payg"
+                className="w-full rounded-2xl border border-white/20 bg-white/5 px-4 py-3 text-center text-sm font-semibold text-white/80 transition hover:bg-white/10"
+                onClick={() => onOpenChange(false)}
+              >
+                View full pricing →
+              </Link>
             </div>
-
-            <TokenHistoryMiniList loading={isLoading} />
 
             <div className="rounded-2xl border border-white/15 bg-white/5 p-4 text-sm text-white/80">
               <p className="font-semibold text-white">Need the full breakdown?</p>

@@ -1,29 +1,12 @@
-import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
 import StyleAccordionFallback from './StyleAccordionFallback';
 import './StyleSidebar.css';
 
 type StyleSidebarFallbackProps = {
-  entitlements: {
-    tier: string;
-    status: string;
-    remainingTokens: number | null;
-    quota: number | null;
-  };
   hasCroppedImage: boolean;
 };
 
-export default function StyleSidebarFallback({
-  entitlements,
-  hasCroppedImage,
-}: StyleSidebarFallbackProps) {
-  const remainingLabel =
-    entitlements.status === 'ready'
-      ? entitlements.remainingTokens == null
-        ? '∞'
-        : Math.max(0, entitlements.remainingTokens)
-      : '—';
-  const quotaLabel = entitlements.quota == null ? '∞' : entitlements.quota;
+export default function StyleSidebarFallback({ hasCroppedImage }: StyleSidebarFallbackProps) {
 
   return (
     <aside
@@ -43,32 +26,6 @@ export default function StyleSidebarFallback({
           <p className="text-[10px] uppercase tracking-[0.38em] text-white/50">Studio Curations</p>
           <h3 className="text-base font-display tracking-[0.16em] uppercase text-white md:text-lg">Wondertone Styles</h3>
           <p className="text-xs text-white/75 md:text-sm">Choose your artistic tone</p>
-        </div>
-
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 via-transparent to-white/5 p-5 shadow-inner">
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -inset-10 opacity-40 blur-2xl"
-            style={{
-              background:
-                'radial-gradient(120% 80% at 0% 0%, rgba(79, 70, 229, 0.35), transparent 60%), radial-gradient(100% 80% at 100% 100%, rgba(14, 165, 233, 0.25), transparent 70%)',
-            }}
-          />
-          <p className="text-xs uppercase tracking-[0.32em] text-white/60">Remaining Generations</p>
-          <p className="mt-2 text-3xl font-display tracking-wider text-white">{remainingLabel}</p>
-          <p className="mt-3 text-xs text-white/70">
-            Tier{' '}
-            <span className="font-semibold text-purple-300">
-              {entitlements.tier.toUpperCase()}
-            </span>{' '}
-            · Quota {quotaLabel}
-          </p>
-          <Link
-            to="/studio/usage"
-            className="mt-4 inline-flex text-xs font-semibold text-purple-300 transition hover:text-purple-200"
-          >
-            View Usage History →
-          </Link>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
