@@ -62,6 +62,7 @@ No photographs, prompts, signed URLs, emails, credentials, raw provider payloads
 - **Verified live on forever-in-color.vercel.app:** `GET /` is 200. `GET /create`, `/pricing`, `/gift`, `/memorial`, `/privacy`, `/terms` return Vercel 404 (`x-vercel-error: NOT_FOUND`). Production currently has no `vercel.json`.
 - **This PR:** adds `vercel.json` SPA rewrites so those client routes serve `index.html` on hard refresh, ads, and shared URLs. `/api/`, `/functions/`, `/assets/`, and `/Auth-Logos/` are excluded from the fallback.
 - This file is git-only until a founder-approved production deploy. This PR does not deploy. Memorial must not be treated as a live entrance URL until this rewrite is on the production host.
+- The SPA fallback contract test reads `vercel.json` and asserts the listed client sources plus a negative lookahead that excludes `api/`, `functions/`, `assets/`, and `Auth-Logos/`.
 
 ## Unverified vs deployed
 
