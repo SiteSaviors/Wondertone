@@ -153,13 +153,13 @@ const ProductHeroSection = () => {
           <div className="text-center text-white max-w-5xl mx-auto px-4">
             <div className="space-y-4">
               <h1 className="font-poppins text-4xl sm:text-5xl md:text-7xl font-bold leading-[1.15] tracking-[-0.04em] drop-shadow-2xl">
-                Your photo. A style.{' '}
+                The photo you love,{' '}
                 <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
-                  Art you actually want.
+                  as art.
                 </span>
               </h1>
               <p className="font-poppins text-base sm:text-lg md:text-xl text-white">
-                Upload a picture. Pick a look. No prompts.
+                One upload. One style. No prompts.
               </p>
             </div>
           </div>

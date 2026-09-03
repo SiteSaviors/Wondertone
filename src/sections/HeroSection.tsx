@@ -9,14 +9,14 @@ const HeroSection = () => {
       <Section className="py-24 lg:py-28 relative">
         <div className="mx-auto max-w-3xl space-y-8 text-center text-white">
           <h1 className="text-4xl md:text-6xl font-semibold leading-tight drop-shadow-lg">
-            Your photo. A style. Art you actually want.
+            The photo you love, as art.
           </h1>
           <p className="text-lg text-white/80 leading-relaxed">
-            Upload a picture. Pick a look. No prompts.
+            One upload. One style. No prompts.
           </p>
           <div className="flex justify-center">
             <Link to="/create" className="btn-primary">
-              Start creating
+              Upload a photo.
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

@@ -59,6 +59,8 @@ describe('memorial, legal shells, and SPA routing', () => {
     expect(memorial).toContain('Bring them back in art.');
     expect(memorial).toContain('Upload a photo. Choose a style. See them again. No prompts.');
     expect(memorial).toContain('Upload a photo.');
+    expect(memorial).not.toContain('The photo you love, as art.');
+    expect(memorial).not.toContain('One upload. One style. No prompts.');
     const uploader = readRepoFile('src/components/launchpad/PhotoUploader.tsx');
     expect(uploader).toContain('Upload a photo of someone you lost');
     expect(uploader).not.toContain('someone they lost');

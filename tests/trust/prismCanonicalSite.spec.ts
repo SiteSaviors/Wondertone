@@ -14,12 +14,15 @@ describe('Prism canonical site completeness', () => {
     expect(landing).toContain('HeroSection');
     expect(landing).not.toContain('MemorialPage');
     expect(landing).not.toContain('Bring them back in art.');
-    expect(hero).toContain('Your photo. A style. Art you actually want.');
-    expect(hero).toContain('Upload a picture. Pick a look. No prompts.');
-    expect(hero).toContain('Start creating');
+    expect(hero).toContain('The photo you love, as art.');
+    expect(hero).toContain('One upload. One style. No prompts.');
+    expect(hero).toContain('Upload a photo.');
     expect(hero).toContain('to="/create"');
+    expect(hero).not.toContain('Your photo. A style. Art you actually want.');
+    expect(hero).not.toContain('Start creating');
     expect(memorial).toContain('Bring them back in art.');
     expect(memorial).not.toContain('Your photo. A style. Art you actually want.');
+    expect(memorial).not.toContain('The photo you love, as art.');
   });
 
   it('sends homepage style cards into /create with that style selected', () => {
@@ -51,7 +54,8 @@ describe('Prism canonical site completeness', () => {
     expect(nav).not.toContain("to: '/pricing'");
     expect(nav).not.toContain("to: '/gift'");
     const title = readRepoFile('index.html');
-    expect(title).toContain('Wondertone | Your photo. A style. Art you actually want.');
+    expect(title).toContain('Wondertone | The photo you love, as art.');
+    expect(title).not.toContain('Your photo. A style. Art you actually want.');
     expect(title).not.toMatch(/Transform Your Memories|AI-Powered Canvas|Living Canvas/i);
     expect(title).not.toMatch(/\$\d|4\.9|10,000/);
     const pricing = readRepoFile('src/pages/PricingPage.tsx');
@@ -125,7 +129,10 @@ describe('Prism canonical site completeness', () => {
     expect(breadth).not.toContain('Prints ship ready to hang');
     expect(breadth).not.toContain('50+');
     const createHero = readRepoFile('src/sections/ProductHeroSection.tsx');
-    expect(createHero).toContain('Your photo. A style.');
+    expect(createHero).toContain('The photo you love,');
+    expect(createHero).toContain('as art.');
+    expect(createHero).not.toContain('Your photo. A style.');
+    expect(createHero).not.toContain('Art you actually want.');
     expect(createHero).not.toContain('40+');
     expect(createHero).not.toContain('in seconds');
     expect(createHero).not.toContain('AnimatedTransformBadge');
@@ -143,7 +150,7 @@ describe('Prism canonical site completeness', () => {
     const empty = readRepoFile('src/sections/studio/components/StudioEmptyState.tsx');
     const preview = readRepoFile('src/sections/studio/components/CanvasPreviewPanel.tsx');
 
-    expect(cta).toContain('Start creating');
+    expect(cta).toContain('Upload a photo.');
     expect(cta).not.toContain('Create Your Masterpiece');
     expect(cta).not.toContain('Watch 60s demo');
     expect(animation).not.toContain('2.3s');

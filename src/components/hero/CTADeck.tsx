@@ -29,7 +29,7 @@ const CTADeck = ({
             background: 'linear-gradient(135deg, rgb(192 132 252) 0%, rgb(59 130 246) 100%)'
           }}
         >
-          Start creating
+          Upload a photo.
         </button>
       </div>
 
