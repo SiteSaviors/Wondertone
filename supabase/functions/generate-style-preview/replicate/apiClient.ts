@@ -24,7 +24,7 @@ export class ReplicateApiClient {
       });
 
       if (!response.ok) {
-        const errorData = await response.text();
+        await response.text();
 
         return {
           ok: false,
