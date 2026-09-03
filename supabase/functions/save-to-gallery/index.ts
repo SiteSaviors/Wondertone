@@ -6,6 +6,8 @@ import {
   ensureObjectExists,
   parseStoragePath,
   downloadStorageObject,
+  resolveAuthorizedObjectUrl,
+  shouldIssuePublicObjectUrl,
   type StorageObjectRef
 } from '../_shared/storageUtils.ts';
 
@@ -224,7 +226,21 @@ serve(async (req: Request) => {
       hasSource: Boolean(previewLog.source_storage_path),
     });
 
-    const publicUrl = buildPublicUrl(storageRef);
+    const locatorUrl = buildPublicUrl(storageRef);
+    const accessUrl = shouldIssuePublicObjectUrl(storageRef.bucket)
+      ? locatorUrl
+      : await resolveAuthorizedObjectUrl(supabase, storageRef, {
+          requesterId: userId,
+          ownerId: userId,
+          entitledToClean: true,
+        });
+
+    if (!accessUrl) {
+      return new Response(
+        JSON.stringify({ error: 'Unable to authorize artwork access' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Check if this preview is already saved
     const { data: existing, error: checkError } = await supabase
@@ -234,7 +250,7 @@ serve(async (req: Request) => {
       .eq('user_id', userId)
       .eq('style_id', styleId)
       .eq('orientation', orientation)
-      .eq('watermarked_url', publicUrl)
+      .eq('watermarked_url', locatorUrl)
       .maybeSingle();
 
     if (checkError) {
@@ -272,8 +288,8 @@ serve(async (req: Request) => {
         style_id: styleId,
         style_name: styleName,
         orientation,
-        watermarked_url: publicUrl,
-        clean_url: publicUrl,
+        watermarked_url: locatorUrl,
+        clean_url: locatorUrl,
         thumbnail_storage_path: thumbnailResult?.storagePath ?? null,
         is_favorited: false,
         is_deleted: false,
@@ -300,7 +316,7 @@ serve(async (req: Request) => {
           styleId: galleryItem.style_id,
           styleName: galleryItem.style_name,
           orientation: galleryItem.orientation,
-          imageUrl: galleryItem.watermarked_url,
+          imageUrl: accessUrl ?? undefined,
           storagePath: `${storageRef.bucket}/${storageRef.path}`,
           createdAt: galleryItem.created_at,
           thumbnailUrl: thumbnailResult?.publicUrl ?? null,

@@ -151,7 +151,7 @@ serve(async (req) => {
     );
   } catch (error) {
     const httpError = normalizeError(error);
-    console.error('[convert-heic] Failure', httpError, error);
+    console.error('[convert-heic] Failure', { code: httpError.code });
     return createCorsResponse(
       JSON.stringify({ ok: false, error: httpError.code, message: httpError.message }),
       httpError.status,

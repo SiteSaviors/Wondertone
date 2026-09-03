@@ -1,9 +1,30 @@
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import {
+  CLEAN_ART_SIGNED_URL_TTL_SECONDS,
+  decideCleanArtAccess,
+  isPrivateArtBucket,
+  shouldIssuePublicObjectUrl,
+  toStorageLocator,
+} from './cleanArtAccess.ts';
 
 export type StorageObjectRef = {
   bucket: string;
   path: string;
 };
+
+export {
+  CLEAN_ART_SIGNED_URL_TTL_SECONDS,
+  decideCleanArtAccess,
+  isPremiumCleanBucket,
+  isPrivateArtBucket,
+  isPublicDisplayBucket,
+  isPremiumPublicObjectUrl,
+  shouldIssuePublicObjectUrl,
+  toStorageLocator,
+  PREMIUM_CLEAN_BUCKET,
+  PUBLIC_DISPLAY_BUCKET,
+  USER_UPLOADS_BUCKET,
+} from './cleanArtAccess.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 if (!SUPABASE_URL) {
@@ -21,8 +42,21 @@ const allowedBuckets = new Set(
 allowedBuckets.add('user-uploads');
 
 const PUBLIC_PREFIX = '/storage/v1/object/public/';
+const SIGN_PREFIX = '/storage/v1/object/sign/';
+const AUTHENTICATED_PREFIX = '/storage/v1/object/authenticated/';
+const OBJECT_PREFIXES = [PUBLIC_PREFIX, SIGN_PREFIX, AUTHENTICATED_PREFIX];
 
 const normalizePath = (value: string): string => value.replace(/^\/+/, '');
+
+const extractPathAfterObjectPrefix = (value: string): string | null => {
+  for (const prefix of OBJECT_PREFIXES) {
+    const index = value.indexOf(prefix);
+    if (index !== -1) {
+      return value.slice(index + prefix.length);
+    }
+  }
+  return null;
+};
 
 export const isAllowedBucket = (bucket: string): boolean => allowedBuckets.has(bucket);
 
@@ -38,11 +72,9 @@ export const parseStoragePath = (input?: string | null): StorageObjectRef | null
     return parseStorageUrl(trimmed);
   }
 
-  // Embedded public prefix
-  if (trimmed.includes(PUBLIC_PREFIX)) {
-    const start = trimmed.indexOf(PUBLIC_PREFIX);
-    const pathAfterPrefix = trimmed.slice(start + PUBLIC_PREFIX.length);
-    return parseStoragePath(pathAfterPrefix);
+  const embeddedPath = extractPathAfterObjectPrefix(trimmed);
+  if (embeddedPath) {
+    return parseStoragePath(embeddedPath);
   }
 
   const normalized = normalizePath(trimmed);
@@ -69,12 +101,11 @@ export const parseStorageUrl = (urlString: string): StorageObjectRef | null => {
       return null;
     }
 
-    const index = url.pathname.indexOf(PUBLIC_PREFIX);
-    if (index === -1) {
+    const pathAfterPrefix = extractPathAfterObjectPrefix(url.pathname);
+    if (!pathAfterPrefix) {
       return null;
     }
 
-    const pathAfterPrefix = url.pathname.slice(index + PUBLIC_PREFIX.length);
     return parseStoragePath(pathAfterPrefix);
   } catch {
     return null;
@@ -83,6 +114,67 @@ export const parseStorageUrl = (urlString: string): StorageObjectRef | null => {
 
 export const buildPublicUrl = ({ bucket, path }: StorageObjectRef): string =>
   `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${normalizePath(path)}`;
+
+export const buildStorageLocator = (ref: StorageObjectRef): string =>
+  toStorageLocator(ref.bucket, ref.path);
+
+export const resolveAuthorizedObjectUrl = async (
+  supabase: SupabaseClient,
+  ref: StorageObjectRef,
+  options: {
+    requesterId?: string | null;
+    ownerId?: string | null;
+    entitledToClean?: boolean;
+    pipelineAuthorized?: boolean;
+    expiresInSeconds?: number;
+  } = {}
+): Promise<string | null> => {
+  const decision = decideCleanArtAccess({
+    bucket: ref.bucket,
+    requesterId: options.requesterId,
+    ownerId: options.ownerId,
+    entitledToClean: options.entitledToClean,
+    pipelineAuthorized: options.pipelineAuthorized,
+  });
+
+  if (!decision.allowed) {
+    return null;
+  }
+
+  if (decision.mode === 'public' || shouldIssuePublicObjectUrl(ref.bucket)) {
+    return buildPublicUrl(ref);
+  }
+
+  return buildSignedUrl(
+    supabase,
+    ref,
+    options.expiresInSeconds ?? CLEAN_ART_SIGNED_URL_TTL_SECONDS
+  );
+};
+
+export const resolveLocatorAccessUrl = async (
+  supabase: SupabaseClient,
+  locator: string,
+  options: {
+    requesterId?: string | null;
+    ownerId?: string | null;
+    entitledToClean?: boolean;
+    pipelineAuthorized?: boolean;
+    expiresInSeconds?: number;
+  } = {}
+): Promise<string | null> => {
+  const ref = parseStorageUrl(locator) ?? parseStoragePath(locator);
+  if (!ref) {
+    // Provider / data URLs are not entitlement proof; pass through only for
+    // this request. Never treat a public CDN URL as authorization.
+    if (isPrivateArtBucket(locator.split('/')[0] ?? '')) {
+      return null;
+    }
+    return locator;
+  }
+
+  return resolveAuthorizedObjectUrl(supabase, ref, options);
+};
 
 export const buildSignedUrl = async (
   supabase: SupabaseClient,

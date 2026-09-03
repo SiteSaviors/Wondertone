@@ -8,8 +8,11 @@ import {
   downloadStorageObject,
   parseStoragePath,
   parseStorageUrl,
+  resolveAuthorizedObjectUrl,
+  shouldIssuePublicObjectUrl,
   type StorageObjectRef
 } from '../_shared/storageUtils.ts';
+import { decideCleanArtAccess } from '../_shared/cleanArtAccess.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -62,15 +65,41 @@ const bufferToDataUrl = (buffer: ArrayBuffer, contentType: string): string => {
   return `data:${contentType};base64,${base64}`;
 };
 
-const buildDisplayUrl = async (
+const resolveOwnedObjectUrl = async (
+  supabase: ReturnType<typeof createClient>,
+  storageRef: StorageObjectRef,
+  requesterId: string,
+  ownerId: string | null,
+  entitledToClean: boolean
+): Promise<string | null> => {
+  const decision = decideCleanArtAccess({
+    bucket: storageRef.bucket,
+    requesterId,
+    ownerId,
+    entitledToClean,
+  });
+  if (!decision.allowed) {
+    return null;
+  }
+  if (decision.mode === 'public' || shouldIssuePublicObjectUrl(storageRef.bucket)) {
+    return buildPublicUrl(storageRef);
+  }
+  return resolveAuthorizedObjectUrl(supabase, storageRef, {
+    requesterId,
+    ownerId,
+    entitledToClean,
+  });
+};
+
+export const buildDisplayUrl = async (
   supabase: ReturnType<typeof createClient>,
   storageRef: StorageObjectRef,
   context: 'preview' | 'download',
-  requiresWatermark: boolean
-): Promise<string> => {
-  const publicUrl = buildPublicUrl(storageRef);
+  requiresWatermark: boolean,
+  access: { requesterId: string; ownerId: string | null }
+): Promise<string | null> => {
   if (!requiresWatermark) {
-    return publicUrl;
+    return resolveOwnedObjectUrl(supabase, storageRef, access.requesterId, access.ownerId, true);
   }
 
   try {
@@ -81,9 +110,12 @@ const buildDisplayUrl = async (
       WatermarkService.generateSessionId()
     );
     return bufferToDataUrl(watermarkedBuffer, contentType ?? 'image/jpeg');
-  } catch (error) {
-    console.error('[get-gallery] Failed to apply watermark on-the-fly', error);
-    return publicUrl;
+  } catch {
+    console.error('[get-gallery] Failed to apply watermark on-the-fly', {
+      code: 'watermark_failed',
+      bucket: storageRef.bucket,
+    });
+    return null;
   }
 };
 
@@ -101,13 +133,18 @@ export const createSignedSource = async (
   }
   const ref = parseStoragePath(storagePath);
   if (!ref) {
-    console.warn('[get-gallery] Unable to parse source storage path for signed URL', { storagePath });
+    console.warn('[get-gallery] Unable to parse source storage path for signed URL', {
+      code: 'invalid_source_path',
+    });
     return { signedUrl: null, expiresAt: null };
   }
   try {
     const signed = await buildSignedUrl(supabase, ref, SOURCE_SIGNED_URL_TTL_SECONDS);
     if (!signed) {
-      console.warn('[get-gallery] Signed URL generation returned null', { storagePath });
+      console.warn('[get-gallery] Signed URL generation returned null', {
+        code: 'signed_url_null',
+        bucket: ref.bucket,
+      });
       return { signedUrl: null, expiresAt: null };
     }
     return {
@@ -116,7 +153,8 @@ export const createSignedSource = async (
     };
   } catch (error) {
     console.error('[get-gallery] Failed to create signed URL for source', {
-      storagePath,
+      code: 'signed_url_failed',
+      bucket: ref.bucket,
       error: error instanceof Error ? error.message : error,
     });
     return { signedUrl: null, expiresAt: null };
@@ -215,10 +253,21 @@ serve(async (req: Request) => {
         }
 
         if (downloadRequested) {
-          const downloadUrl = await buildDisplayUrl(supabase, storageRef, 'download', requiresWatermark);
+          const downloadUrl = await buildDisplayUrl(
+            supabase,
+            storageRef,
+            'download',
+            requiresWatermark,
+            { requesterId: userId, ownerId: userId }
+          );
+          if (!downloadUrl) {
+            return new Response(
+              JSON.stringify({ error: 'Unable to authorize artwork access' }),
+              { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
           const payload = {
             downloadUrl,
-            storageUrl: buildPublicUrl(storageRef),
             storagePath: `${storageRef.bucket}/${storageRef.path}`,
             requiresWatermark
           };
@@ -228,11 +277,32 @@ serve(async (req: Request) => {
           );
         }
 
-        const displayUrl = await buildDisplayUrl(supabase, storageRef, 'preview', requiresWatermark);
+        const displayUrl = await buildDisplayUrl(
+          supabase,
+          storageRef,
+          'preview',
+          requiresWatermark,
+          { requesterId: userId, ownerId: userId }
+        );
+        if (!displayUrl) {
+          return new Response(
+            JSON.stringify({ error: 'Unable to authorize artwork access' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
         const thumbnailRef = itemRow.thumbnail_storage_path
           ? parseStoragePath(itemRow.thumbnail_storage_path)
           : null;
-        const thumbnailUrl = thumbnailRef ? buildPublicUrl(thumbnailRef) : null;
+        const thumbnailUrl =
+          thumbnailRef && shouldIssuePublicObjectUrl(thumbnailRef.bucket)
+            ? buildPublicUrl(thumbnailRef)
+            : thumbnailRef
+              ? await resolveAuthorizedObjectUrl(supabase, thumbnailRef, {
+                  requesterId: userId,
+                  ownerId: userId,
+                  entitledToClean: true,
+                })
+              : null;
         const previewLog = itemRow.preview_logs as
           | { source_storage_path: string | null; source_display_url: string | null; crop_config: Record<string, unknown> | null }
           | null
@@ -246,7 +316,7 @@ serve(async (req: Request) => {
             styleId: itemRow.style_id,
             styleName: itemRow.style_name,
             orientation: itemRow.orientation,
-            imageUrl: buildPublicUrl(storageRef),
+            imageUrl: displayUrl,
             displayUrl,
             storagePath: `${storageRef.bucket}/${storageRef.path}`,
             thumbnailUrl,
@@ -365,12 +435,30 @@ serve(async (req: Request) => {
               return null;
             }
 
-            const displayUrl = await buildDisplayUrl(supabase, storageRef, 'preview', requiresWatermark);
-            const imageUrl = buildPublicUrl(storageRef);
+            const displayUrl = await buildDisplayUrl(
+              supabase,
+              storageRef,
+              'preview',
+              requiresWatermark,
+              { requesterId: userId, ownerId: item.userId }
+            );
+            if (!displayUrl) {
+              return null;
+            }
+            const imageUrl = displayUrl;
             const thumbnailRef = item.thumbnailStoragePath
               ? parseStoragePath(item.thumbnailStoragePath)
               : null;
-            const thumbnailUrl = thumbnailRef ? buildPublicUrl(thumbnailRef) : null;
+            const thumbnailUrl =
+              thumbnailRef && shouldIssuePublicObjectUrl(thumbnailRef.bucket)
+                ? buildPublicUrl(thumbnailRef)
+                : thumbnailRef
+                  ? await resolveAuthorizedObjectUrl(supabase, thumbnailRef, {
+                      requesterId: userId,
+                      ownerId: item.userId,
+                      entitledToClean: true,
+                    })
+                  : null;
             const sourceMeta = await createSignedSource(supabase, item.sourceStoragePath);
 
             return {
