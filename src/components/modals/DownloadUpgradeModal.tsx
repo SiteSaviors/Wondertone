@@ -1,6 +1,10 @@
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { LIVE_CHECKOUT_ENABLED } from '@/config/commerceGuards';
 import { trackCheckoutStarted } from '@/utils/telemetry';
+import { createArtworkCheckoutSession } from '@/utils/artworkCheckout';
+import { useStudioPreviewState } from '@/store/hooks/studio/useStudioPreviewState';
+import { useStudioUserState } from '@/store/hooks/studio/useStudioUserState';
 
 interface DownloadUpgradeModalProps {
   isOpen: boolean;
@@ -8,11 +12,39 @@ interface DownloadUpgradeModalProps {
 }
 
 export default function DownloadUpgradeModal({ isOpen, onClose }: DownloadUpgradeModalProps) {
+  const { preview } = useStudioPreviewState();
+  const { sessionAccessToken } = useStudioUserState();
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
   if (!isOpen) return null;
 
-  const handleCheckoutIntent = () => {
+  const handleCheckoutIntent = async () => {
+    if (LIVE_CHECKOUT_ENABLED) {
+      setMessage('Live payments are not enabled.');
+      return;
+    }
+
+    setPending(true);
+    setMessage(null);
     trackCheckoutStarted();
-    onClose();
+
+    const result = await createArtworkCheckoutSession({
+      previewLogId: preview?.data?.previewLogId,
+      accessToken: sessionAccessToken,
+    });
+
+    if (result.status === 'redirect') {
+      window.location.assign(result.url);
+      return;
+    }
+
+    setPending(false);
+    if (result.status === 'not_configured' || result.status === 'live_disabled') {
+      setMessage('Checkout is not enabled.');
+      return;
+    }
+    setMessage(result.message);
   };
 
   return (
@@ -32,18 +64,21 @@ export default function DownloadUpgradeModal({ isOpen, onClose }: DownloadUpgrad
           </h2>
           <p className="text-center text-white/70 mb-8">
             The preview is display-only. The product is the full-resolution file of the revealed
-            artwork after entitlement. Checkout is not enabled on this path.
+            artwork after entitlement.
           </p>
 
           <div className="space-y-3">
             <button
               type="button"
-              onClick={handleCheckoutIntent}
-              disabled={!LIVE_CHECKOUT_ENABLED}
+              onClick={() => {
+                void handleCheckoutIntent();
+              }}
+              disabled={pending || LIVE_CHECKOUT_ENABLED}
               className="w-full py-3 px-6 rounded-xl font-semibold bg-gradient-to-r from-brand-indigo to-purple-600 text-white transition-all shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {LIVE_CHECKOUT_ENABLED ? 'Continue to checkout' : 'Checkout is not enabled'}
+              {LIVE_CHECKOUT_ENABLED ? 'Checkout is not enabled' : pending ? 'Starting checkout' : 'Continue'}
             </button>
+            {message ? <p className="text-center text-sm text-white/65">{message}</p> : null}
             <button
               type="button"
               onClick={onClose}

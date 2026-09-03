@@ -17,3 +17,9 @@ entrypoint = "./functions/create-preview-log/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/stripe-webhook/index.ts"
+
+# Test-mode artwork Checkout. JWT stays on. Live payments stay off.
+[functions.create-artwork-checkout]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/create-artwork-checkout/index.ts"

@@ -18,8 +18,14 @@ export const FIRST_SKU = 'revealed_artwork_full_res' as const;
 
 export type SaleableSku = typeof FIRST_SKU;
 
-/** Live Stripe Checkout stays off. Primitives only. */
+/** Live Stripe Checkout stays off. Do not flip this for test-mode wiring. */
 export const LIVE_CHECKOUT_ENABLED = false;
+
+/**
+ * Test-mode Checkout price for revealed_artwork_full_res.
+ * Beacon attaches a real test price id to this env later. Do not invent one.
+ */
+export const ARTWORK_TEST_PRICE_ENV = 'STRIPE_TEST_PRICE_REVEALED_ARTWORK';
 
 /** This path does not sell subscription tiers. */
 export const SELLABLE_SUBSCRIPTION_TIERS = [] as const;

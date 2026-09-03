@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FIRST_SKU,
   LIVE_CHECKOUT_ENABLED,
+  ARTWORK_TEST_PRICE_ENV,
   filterPurchasableEnhancementIds,
   isPurchaseDisabledEnhancement,
 } from '@/config/commerceGuards';
@@ -38,6 +39,7 @@ describe('Living Canvas purchase guard', () => {
   it('treats living-canvas as purchase-disabled', () => {
     expect(LIVE_CHECKOUT_ENABLED).toBe(false);
     expect(FIRST_SKU).toBe('revealed_artwork_full_res');
+    expect(ARTWORK_TEST_PRICE_ENV).toBe('STRIPE_TEST_PRICE_REVEALED_ARTWORK');
     expect(isPurchaseDisabledEnhancement('living-canvas')).toBe(true);
     expect(isPurchaseDisabledEnhancement('floating-frame')).toBe(false);
     expect(filterPurchasableEnhancementIds(['floating-frame', 'living-canvas', 'digital-bundle'])).toEqual([

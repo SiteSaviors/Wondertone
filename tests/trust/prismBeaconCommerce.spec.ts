@@ -21,12 +21,37 @@ describe('Beacon commerce primitives', () => {
     expect(webhook).toContain('constructEvent');
     expect(webhook).toContain('stripe_event_ledger');
     expect(webhook).toContain('artwork_entitlements');
+    expect(webhook).toContain('stripe_session_id');
     expect(webhook).toContain('entitlement_granted');
     expect(webhook).toContain('checkout.session.completed is not conversion');
     const grantFn = webhook.slice(webhook.indexOf('const grantArtworkEntitlement'));
-    expect(grantFn.indexOf('.from("artwork_entitlements")')).toBeLessThan(grantFn.indexOf('persistEntitlementGranted'));
+    expect(grantFn.indexOf('artwork_entitlements')).toBeLessThan(grantFn.indexOf('persistEntitlementGranted'));
+    expect(grantFn).toContain('stripeSessionId');
     expect(webhook).not.toContain('upsertSubscription');
     expect(webhook).not.toContain("tier: 'creator'");
+  });
+
+  it('wires test-mode artwork checkout without inventing a price id', () => {
+    const checkout = readRepoFile('supabase/functions/create-artwork-checkout/index.ts');
+    const client = readRepoFile('src/utils/artworkCheckout.ts');
+    const config = readRepoFile('supabase/config.toml');
+    const migration = readRepoFile('supabase/migrations/20260903150000_artwork_entitlement_stripe_session.sql');
+    const guards = readRepoFile('src/config/commerceGuards.ts');
+
+    expect(checkout).toContain('revealed_artwork_full_res');
+    expect(checkout).toContain('STRIPE_TEST_PRICE_REVEALED_ARTWORK');
+    expect(checkout).toContain('sk_live_');
+    expect(checkout).toContain('live_payments_disabled');
+    expect(checkout).toContain("mode: \"payment\"");
+    expect(checkout).not.toMatch(/price_[A-Za-z0-9]{10,}/);
+    expect(checkout).not.toContain('subscription');
+    expect(checkout).not.toContain('purchase-tokens');
+    expect(client).toContain('create-artwork-checkout');
+    expect(client).toContain('FIRST_SKU');
+    expect(config).toMatch(/\[functions\.create-artwork-checkout\][\s\S]*verify_jwt = true/);
+    expect(migration).toContain('stripe_session_id');
+    expect(migration).toContain('user_id, preview_log_id, stripe_session_id');
+    expect(guards).toContain("ARTWORK_TEST_PRICE_ENV = 'STRIPE_TEST_PRICE_REVEALED_ARTWORK'");
   });
 
   it('stops compositing logos on generate-style-preview', () => {

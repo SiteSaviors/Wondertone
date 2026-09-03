@@ -70,23 +70,31 @@ const persistEntitlementGranted = async (params: {
 
 const grantArtworkEntitlement = async (params: {
   userId: string;
-  previewLogId: string | null;
+  previewLogId: string;
+  stripeSessionId: string;
   stripeEventId: string;
   audience: FunnelAudience;
   releaseId: string;
-}): Promise<void> => {
-  if (!supabase) return;
+}): Promise<"granted" | "duplicate"> => {
+  if (!supabase) throw new Error("configuration_error");
 
-  const { error } = await supabase.from("artwork_entitlements").upsert(
-    {
-      user_id: params.userId,
-      sku: ARTWORK_SKU,
-      preview_log_id: params.previewLogId,
-      stripe_event_id: params.stripeEventId,
-    },
-    { onConflict: "user_id,sku,preview_log_id" }
-  );
+  const { data: existing } = await supabase
+    .from("artwork_entitlements")
+    .select("id")
+    .eq("stripe_session_id", params.stripeSessionId)
+    .maybeSingle();
 
+  if (existing) return "duplicate";
+
+  const { error } = await supabase.from("artwork_entitlements").insert({
+    user_id: params.userId,
+    sku: ARTWORK_SKU,
+    preview_log_id: params.previewLogId,
+    stripe_session_id: params.stripeSessionId,
+    stripe_event_id: params.stripeEventId,
+  });
+
+  if (error?.code === "23505") return "duplicate";
   if (error) {
     console.error(JSON.stringify({ scope: "stripe-webhook", message: "entitlement_write_failed" }));
     throw new Error("entitlement_write_failed");
@@ -97,6 +105,7 @@ const grantArtworkEntitlement = async (params: {
     audience: params.audience,
     releaseId: params.releaseId,
   });
+  return "granted";
 };
 
 serve(async (req) => {
@@ -123,14 +132,6 @@ serve(async (req) => {
     return respond({ error: "invalid_signature" }, 400);
   }
 
-  const ledger = await claimLedger(event);
-  if (ledger === "failed") {
-    return respond({ error: "ledger_error" }, 500);
-  }
-  if (ledger === "duplicate") {
-    return respond({ received: true, duplicate: true });
-  }
-
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
@@ -138,6 +139,7 @@ serve(async (req) => {
       const customerId = typeof session.customer === "string" ? session.customer : null;
       const sku = session.metadata?.sku ?? "";
       const previewLogId = session.metadata?.preview_log_id ?? null;
+      const stripeSessionId = session.id;
       const claimedAudience = session.metadata?.audience;
       const audience: FunnelAudience = isFunnelAudience(claimedAudience)
         ? claimedAudience
@@ -161,15 +163,21 @@ serve(async (req) => {
 
       // checkout.session.completed is not conversion. Conversion is entitlement_granted
       // after an artwork_entitlements row exists.
-      if (sku === ARTWORK_SKU && userId) {
+      if (sku === ARTWORK_SKU && userId && previewLogId && stripeSessionId) {
         await grantArtworkEntitlement({
           userId,
           previewLogId,
+          stripeSessionId,
           stripeEventId: event.id,
           audience,
           releaseId,
         });
       }
+    }
+
+    const ledger = await claimLedger(event);
+    if (ledger === "failed") {
+      return respond({ error: "ledger_error" }, 500);
     }
   } catch (_error) {
     console.error(JSON.stringify({ scope: "stripe-webhook", message: "handler_error" }));
