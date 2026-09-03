@@ -70,6 +70,17 @@ export default defineConfig(({ mode }) => {
     rollupOptions: {
       output: {
         manualChunks: (id: string) => {
+          // Keep Prism ingest/client out of the lazy StyleAccordion chunk so the
+          // accordion budget stays independent of funnel payload code.
+          if (
+            id.includes('/src/utils/telemetry') ||
+            id.includes('/src/utils/funnelAnalytics') ||
+            id.includes('/src/utils/analyticsClient') ||
+            id.includes('/src/config/releaseInfo')
+          ) {
+            return 'funnel-analytics';
+          }
+
           if (!id.includes('node_modules')) {
             return undefined;
           }

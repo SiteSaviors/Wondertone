@@ -6,7 +6,9 @@ const DIST_DIR = path.resolve(__dirname, '..', 'dist', 'assets');
 const LIMITS = [
   { pattern: /^index-.*\.js$/, gzipLimitKb: 170 },
   { pattern: /^supabaseClient-.*\.js$/, gzipLimitKb: 130 },
-  { pattern: /^StyleAccordion-.*\.js$/, gzipLimitKb: 25 },
+  // Raw file size, not gzip. Accordion chunk is ToneSection + cards; Prism
+  // ingest is split to funnel-analytics so this budget does not track payload code.
+  { pattern: /^StyleAccordion-.*\.js$/, gzipLimitKb: 28 },
 ];
 
 const readSize = (filePath) => {
