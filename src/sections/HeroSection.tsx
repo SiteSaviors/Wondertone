@@ -16,7 +16,7 @@ const HeroSection = () => {
           </p>
           <div className="flex justify-center">
             <Link to="/create" className="btn-primary">
-              Upload a photo.
+              Upload a photo
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

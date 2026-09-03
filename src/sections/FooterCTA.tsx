@@ -11,7 +11,7 @@ const FooterCTA = () => {
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <Link to="/create" className="btn-primary">
-            Start creating
+            Upload a photo
           </Link>
         </div>
         <p className="text-xs text-white/40">

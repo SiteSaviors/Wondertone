@@ -26,6 +26,7 @@ const KILL_LIST = [
   /Ships in 3-5 days/i,
   /Ships in 3–5/i,
   /ship within 3–4/i,
+  /Your photo\. A style\. Art you actually want/i,
 ];
 
 const collectSourceFiles = (dir: string): string[] => {

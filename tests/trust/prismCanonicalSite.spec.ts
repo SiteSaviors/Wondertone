@@ -16,7 +16,8 @@ describe('Prism canonical site completeness', () => {
     expect(landing).not.toContain('Bring them back in art.');
     expect(hero).toContain('The photo you love, as art.');
     expect(hero).toContain('One upload. One style. No prompts.');
-    expect(hero).toContain('Upload a photo.');
+    expect(hero).toContain('Upload a photo');
+    expect(hero).not.toContain('Upload a photo.');
     expect(hero).toContain('to="/create"');
     expect(hero).not.toContain('Your photo. A style. Art you actually want.');
     expect(hero).not.toContain('Start creating');
@@ -48,6 +49,8 @@ describe('Prism canonical site completeness', () => {
     const nav = readRepoFile('src/components/navigation/FounderNavigation.tsx');
     expect(footer).toContain('to="/privacy"');
     expect(footer).toContain('to="/terms"');
+    expect(footer).toContain('Upload a photo');
+    expect(footer).not.toContain('Start creating');
     expect(footer).not.toContain('/pricing');
     expect(gift).toContain('to="/privacy"');
     expect(gift).toContain('to="/terms"');
@@ -150,7 +153,9 @@ describe('Prism canonical site completeness', () => {
     const empty = readRepoFile('src/sections/studio/components/StudioEmptyState.tsx');
     const preview = readRepoFile('src/sections/studio/components/CanvasPreviewPanel.tsx');
 
-    expect(cta).toContain('Upload a photo.');
+    expect(cta).toContain('Upload a photo');
+    expect(cta).not.toContain('Upload a photo.');
+    expect(cta).not.toContain('Start creating');
     expect(cta).not.toContain('Create Your Masterpiece');
     expect(cta).not.toContain('Watch 60s demo');
     expect(animation).not.toContain('2.3s');
@@ -167,6 +172,8 @@ describe('Prism canonical site completeness', () => {
       styleCard.indexOf('Unlock with {gate.requiredTier.toUpperCase()} plan')
     );
     expect(empty).toContain('hideStockLibrary');
+    expect(empty).not.toContain('Your photo. A style. Art you actually want.');
+    expect(empty).not.toContain('The photo you love, as art.');
     expect(preview).toContain("previewStateStatus === 'ready' && currentStyle");
     expect(preview.indexOf("previewStateStatus === 'ready' && currentStyle")).toBeLessThan(
       preview.indexOf('<ActionGrid')
