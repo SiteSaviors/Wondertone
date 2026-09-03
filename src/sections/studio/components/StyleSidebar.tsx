@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
 import OriginalImageCard from './OriginalImageCard';
 import StyleAccordionFallback from './StyleAccordionFallback';
+import { useProductSurface } from '@/providers/ProductSurfaceProvider';
 import './StyleSidebar.css';
 
 const StyleAccordion = lazy(() => import('./StyleAccordion'));
@@ -12,6 +13,7 @@ type StyleSidebarProps = {
 };
 
 const StyleSidebar = ({ hasCroppedImage }: StyleSidebarProps) => {
+  const { rules } = useProductSurface();
 
   return (
     <aside
@@ -40,17 +42,18 @@ const StyleSidebar = ({ hasCroppedImage }: StyleSidebarProps) => {
           </Suspense>
         </div>
 
-        {/* Upgrade CTA */}
-        <div className="p-4 mt-6 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border-2 border-purple-400/30 shadow-lg">
-          <p className="text-sm font-semibold text-white mb-2">Want unlimited generations?</p>
-          <p className="text-xs text-white/70 mb-3">Upgrade to Creator for unlimited style switching</p>
-          <Link
-            to="/pricing"
-            className="block w-full px-4 py-2 rounded-lg bg-gradient-cta text-white text-sm font-bold shadow-glow-purple hover:shadow-glow-purple transition text-center"
-          >
-            Upgrade - $9.99/mo
-          </Link>
-        </div>
+        {!rules.hideSubscriptionTiers && (
+          <div className="p-4 mt-6 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border-2 border-purple-400/30 shadow-lg">
+            <p className="text-sm font-semibold text-white mb-2">Want unlimited generations?</p>
+            <p className="text-xs text-white/70 mb-3">Upgrade to Creator for unlimited style switching</p>
+            <Link
+              to="/pricing"
+              className="block w-full px-4 py-2 rounded-lg bg-gradient-cta text-white text-sm font-bold shadow-glow-purple hover:shadow-glow-purple transition text-center"
+            >
+              Upgrade - $9.99/mo
+            </Link>
+          </div>
+        )}
       </div>
     </aside>
   );

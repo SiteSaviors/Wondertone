@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FIRST_SKU,
+  LIVE_CHECKOUT_ENABLED,
   filterPurchasableEnhancementIds,
   isPurchaseDisabledEnhancement,
 } from '@/config/commerceGuards';
@@ -34,6 +36,8 @@ const createTestStore = () => {
 
 describe('Living Canvas purchase guard', () => {
   it('treats living-canvas as purchase-disabled', () => {
+    expect(LIVE_CHECKOUT_ENABLED).toBe(false);
+    expect(FIRST_SKU).toBe('revealed_artwork_full_res');
     expect(isPurchaseDisabledEnhancement('living-canvas')).toBe(true);
     expect(isPurchaseDisabledEnhancement('floating-frame')).toBe(false);
     expect(filterPurchasableEnhancementIds(['floating-frame', 'living-canvas', 'digital-bundle'])).toEqual([

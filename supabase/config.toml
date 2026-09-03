@@ -9,3 +9,11 @@ entrypoint = "./functions/create-preview-log/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/create-preview-log/*.html" ]
+
+# Isolated-branch only. Stripe cannot send a user JWT.
+# Do NOT apply this verify_jwt=false change to production from this PR.
+# Production JWT policy is a separate founder-approved change.
+[functions.stripe-webhook]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/stripe-webhook/index.ts"

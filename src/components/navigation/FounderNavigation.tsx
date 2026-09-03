@@ -10,6 +10,7 @@ import MembershipConfirmationModal from '@/components/navigation/MembershipConfi
 import OrdersPopover from '@/components/navigation/OrdersPopover';
 import { trackTokenDrawerOpened } from '@/utils/telemetry';
 import { createBillingPortalSession } from '@/utils/billingPortal';
+import { useProductSurface } from '@/providers/ProductSurfaceProvider';
 
 const AccountDropdown = lazy(() => import('@/components/navigation/AccountDropdown'));
 
@@ -32,6 +33,12 @@ const FounderNavigation = () => {
   const { signOut } = useSessionActions();
   const openAuthModal = useAuthModal((state) => state.openModal);
   const openNavAuthModal = (mode?: AuthModalMode) => openAuthModal(mode, { source: 'nav' });
+  const { rules, surface } = useProductSurface();
+  const navLinks = NAV_LINKS.filter((link) => {
+    if (rules.hideSubscriptionTiers && link.id === 'pricing') return false;
+    if (surface === 'memorial' && (link.id === 'studio' || link.id === 'styles')) return false;
+    return true;
+  });
   const cartItemCount = enhancements.filter((enhancement) => enhancement.enabled).length;
   const [isAtTop, setIsAtTop] = useState(true);
   const [heroVisible, setHeroVisible] = useState(true);
@@ -240,7 +247,7 @@ const FounderNavigation = () => {
           </Link>
 
           <nav className="hidden items-center gap-6 md:flex lg:gap-8" aria-label="Primary">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <Link
                 key={link.label}
                 to={link.to}
@@ -274,6 +281,7 @@ const FounderNavigation = () => {
           </nav>
 
           <div className="flex items-center gap-3 sm:gap-4">
+            {!rules.hideTokenPacks && (
             <button
               type="button"
               onClick={() => {
@@ -301,7 +309,9 @@ const FounderNavigation = () => {
               </span>
               <span>Tokens {tokensRemaining}</span>
             </button>
+            )}
 
+            {!rules.hideTokenPacks && (
             <button
               type="button"
               onClick={() => {
@@ -322,13 +332,16 @@ const FounderNavigation = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
               </svg>
             </button>
+            )}
 
-            <OrdersPopover
-              cartCount={cartItemCount}
-              onNavigateToCheckout={() => {
-                navigate('/create#canvas-checkout');
-              }}
-            />
+            {!rules.hideCanvasRail && (
+              <OrdersPopover
+                cartCount={cartItemCount}
+                onNavigateToCheckout={() => {
+                  navigate('/create#canvas-checkout');
+                }}
+              />
+            )}
 
             <Suspense fallback={accountFallback}>
               <AccountDropdown
@@ -343,15 +356,16 @@ const FounderNavigation = () => {
                 onOpenAuthModal={openNavAuthModal}
                 onSignOut={signOut}
                 onManageMembership={() => setMembershipModalOpen(true)}
-                canUpgrade={entitlements.tier !== 'pro'}
+                canUpgrade={!rules.hideSubscriptionTiers && entitlements.tier !== 'pro'}
               />
             </Suspense>
           </div>
         </div>
       </div>
       <TokenBalanceDrawer
-        open={tokenDrawerOpen}
+        open={!rules.hideTokenPacks && tokenDrawerOpen}
         onOpenChange={(next) => {
+          if (rules.hideTokenPacks) return;
           setTokenDrawerOpen(next);
           if (next) {
             trackTokenDrawerOpened(entitlements.tier, entitlements.remainingTokens ?? null);

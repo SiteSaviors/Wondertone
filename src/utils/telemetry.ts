@@ -1,4 +1,56 @@
 import { sendAnalyticsEvent } from '@/utils/analyticsClient';
+import { FIRST_SKU } from '@/config/commerceGuards';
+import { getProductSurface } from '@/config/productSurface';
+
+const VISIT_SESSION_KEY = 'wt_prism_visit';
+
+export function trackVisit() {
+  try {
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(VISIT_SESSION_KEY)) {
+      return;
+    }
+    sessionStorage.setItem(VISIT_SESSION_KEY, '1');
+  } catch {
+    // private mode
+  }
+  sendAnalyticsEvent('visit', { surface: getProductSurface() });
+}
+
+export function trackSourceSelected(source: 'photo' | 'stock') {
+  sendAnalyticsEvent('source_selected', { source, surface: getProductSurface() });
+}
+
+export function trackUploadComplete(source: 'photo' | 'stock') {
+  sendAnalyticsEvent('upload_complete', { source, surface: getProductSurface() });
+}
+
+export function trackStyleSelected(styleId: string) {
+  sendAnalyticsEvent('style_selected', { style_id: styleId, surface: getProductSurface() });
+}
+
+export function trackRevealShown(styleId: string, cacheHit?: boolean) {
+  sendAnalyticsEvent('reveal_shown', {
+    style_id: styleId,
+    cache_hit: typeof cacheHit === 'boolean' ? cacheHit : null,
+    surface: getProductSurface(),
+  });
+}
+
+export function trackRevealFailed(styleId: string, reason = 'unavailable') {
+  sendAnalyticsEvent('reveal_failed', {
+    style_id: styleId,
+    reason,
+    surface: getProductSurface(),
+  });
+}
+
+export function trackPaywallShown() {
+  sendAnalyticsEvent('paywall_shown', { sku: FIRST_SKU, surface: getProductSurface() });
+}
+
+export function trackCheckoutStarted() {
+  sendAnalyticsEvent('checkout_started', { sku: FIRST_SKU, surface: getProductSurface() });
+}
 
 export type StepOneEvent =
   | { type: 'substep'; value: 'upload' | 'crop' | 'style-selection' | 'complete' }
@@ -12,21 +64,20 @@ export type StepOneEvent =
   | { type: 'tone_upgrade_prompt'; styleId?: string; tone?: string; requiredTier?: string | null }
   | { type: 'conversion'; status: 'start' | 'success' | 'error'; cacheHit?: boolean };
 
-const STEP_ONE_EVENT_NAME: Record<StepOneEvent['type'], string> = {
-  substep: 'step_one_substep',
-  preview: 'step_one_preview',
-  cta: 'step_one_cta',
-  upload_started: 'step_one_upload_started',
-  upload_success: 'step_one_upload_success',
-  tone_section_view: 'tone_section_view',
-  tone_style_select: 'tone_style_select',
-  tone_style_locked: 'tone_style_locked',
-  tone_upgrade_prompt: 'tone_upgrade_prompt',
-  conversion: 'conversion',
-};
-
 export function emitStepOneEvent(event: StepOneEvent) {
-  sendAnalyticsEvent(STEP_ONE_EVENT_NAME[event.type], { ...event });
+  if (event.type === 'tone_style_select') {
+    trackStyleSelected(event.styleId);
+    return;
+  }
+  if (event.type === 'preview' && (event.status === 'complete' || event.status === 'ready')) {
+    trackRevealShown(event.styleId);
+    return;
+  }
+  if (event.type === 'preview' && event.status === 'error') {
+    trackRevealFailed(event.styleId, 'generation_failed');
+    return;
+  }
+  // Other launchflow/step-one names are not in the Prism v1 allowlist.
 }
 
 export type AuthProviderMethod = 'google' | 'microsoft' | 'facebook' | 'email';
@@ -68,8 +119,8 @@ export function trackTokenDrawerOpened(userTier: string, remainingTokens: number
   sendAnalyticsEvent('token_drawer_opened', { userTier, remainingTokens });
 }
 
-export function trackDownloadCTAClick(userTier: string, isPremium: boolean) {
-  sendAnalyticsEvent('cta_download_click', { userTier, isPremium });
+export function trackDownloadCTAClick(_userTier: string, _isPremium: boolean) {
+  // Download CTA is not a Prism persist event. Paywall/checkout are explicit.
 }
 
 export function trackCanvasCTAClick(userTier: string) {
@@ -80,12 +131,12 @@ export function trackCanvasPanelOpen(userTier: string) {
   sendAnalyticsEvent('canvas_panel_open', { userTier });
 }
 
-export function trackDownloadSuccess(userTier: string, styleId: string) {
-  sendAnalyticsEvent('download_success', { userTier, styleId });
+export function trackDownloadSuccess(_userTier: string, _styleId: string) {
+  // Preview download is not the product. Conversion is entitlement_granted.
 }
 
-export function trackOrderStarted(userTier: string, orderTotal: number, hasEnhancements: boolean) {
-  sendAnalyticsEvent('order_started', { userTier, orderTotal, hasEnhancements });
+export function trackOrderStarted(_userTier: string, _orderTotal: number, _hasEnhancements: boolean) {
+  // Canvas/order start is not a Prism persist event on this path.
 }
 
 export function trackOrderCompleted(

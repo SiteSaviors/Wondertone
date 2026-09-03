@@ -1,99 +1,53 @@
-import { getReleaseIdentity, type ReleaseIdentity } from '@/config/releaseInfo';
+import { getReleaseIdentity, formatReleaseId, type ReleaseIdentity } from '@/config/releaseInfo';
+import {
+  getProductSurface,
+  resolveFunnelAudience,
+  type FunnelAudience,
+} from '@/config/productSurface';
 
 export const FUNNEL_SCHEMA_VERSION = 1;
 
+/**
+ * Prism event contract v1. Persist ONLY these names.
+ * Conversion is entitlement_granted (server-authored). Never checkout success / redirect.
+ */
 export const FUNNEL_EVENT_NAMES = [
-  'launchflow_open',
-  'launchflow_complete',
-  'launchflow_edit_reopen',
-  'launchflow_empty_state_interaction',
-  'launchflow_health_warning',
-  'step_one_substep',
-  'step_one_preview',
-  'step_one_cta',
-  'step_one_upload_started',
-  'step_one_upload_success',
-  'tone_section_view',
-  'tone_style_select',
-  'tone_style_locked',
-  'tone_upgrade_prompt',
-  'conversion',
-  'auth_modal_shown',
-  'auth_modal_completed',
-  'auth_modal_abandoned',
-  'cta_download_click',
-  'cta_canvas_click',
-  'canvas_panel_open',
-  'download_success',
-  'order_started',
-  'checkout_step_view',
-  'checkout_exit',
-  'recommendation_shown',
-  'recommendation_selected',
-  'token_drawer_opened',
-  'pricing_toggle',
-  'token_pack_checkout_start',
-  'social_proof_cta_click',
-  'social_proof_spotlight_interaction',
-  'social_proof_canvas_link_click',
-  'canvas_quality_impression',
-  'canvas_quality_cta_click',
-  'server_checkout_intent_created',
+  'visit',
+  'source_selected',
+  'upload_complete',
+  'style_selected',
+  'reveal_shown',
+  'reveal_failed',
+  'paywall_shown',
+  'checkout_started',
+  'entitlement_granted',
 ] as const;
 
 export type FunnelEventName = (typeof FUNNEL_EVENT_NAMES)[number];
 
 const FUNNEL_EVENT_NAME_SET = new Set<string>(FUNNEL_EVENT_NAMES);
 
+export const SERVER_ONLY_FUNNEL_EVENTS = ['entitlement_granted'] as const;
+
 /**
- * Client `order_completed` is intentionally excluded. Payment, entitlement, and
- * order completion remain server-authoritative.
+ * Client must never persist conversion, payment, or entitlement. Those stay server-authoritative.
  */
-export const CLIENT_FORBIDDEN_FUNNEL_EVENTS = ['order_completed', 'payment_succeeded', 'entitlement_changed'] as const;
+export const CLIENT_FORBIDDEN_FUNNEL_EVENTS = [
+  'entitlement_granted',
+  'order_completed',
+  'payment_succeeded',
+  'entitlement_changed',
+  'checkout_success',
+  'checkout_redirect',
+] as const;
 
 export const ALLOWED_FUNNEL_PROPERTY_KEYS = [
   'source',
-  'action',
   'style_id',
-  'tone',
-  'step',
-  'status',
-  'cache_hit',
-  'user_tier',
-  'is_premium',
-  'has_enhancements',
-  'order_total_cents',
-  'pack_id',
-  'tokens',
-  'price_cents',
-  'orientation',
-  'size_id',
-  'is_recommended',
-  'is_most_popular',
-  'remaining_tokens',
-  'authenticated',
-  'returning_status',
-  'device_type',
-  'session_hydrated',
-  'elapsed_ms',
-  'deficit',
-  'open_count',
-  'completion_count',
-  'window_ms',
-  'method',
   'reason',
+  'sku',
   'surface',
-  'required_tier',
-  'product',
-  'interaction',
-  'target',
-  'authed',
-  'has_upload',
-  'mode',
-  'value',
-  'was_recommended',
-  'was_most_popular',
-  'enhancement_count',
+  'cache_hit',
 ] as const;
 
 export type FunnelPropertyKey = (typeof ALLOWED_FUNNEL_PROPERTY_KEYS)[number];
@@ -101,15 +55,26 @@ export type FunnelPropertyKey = (typeof ALLOWED_FUNNEL_PROPERTY_KEYS)[number];
 const ALLOWED_PROPERTY_KEY_SET = new Set<string>(ALLOWED_FUNNEL_PROPERTY_KEYS);
 
 const FORBIDDEN_PROPERTY_KEY_PATTERN =
-  /email|password|secret|token|authorization|apikey|api_key|service_role|signed_url|prompt|image|photo|url|payload|exception|stack|cookie|jwt|stripe|credential|phone|address/i;
+  /email|password|secret|token|authorization|apikey|api_key|service_role|signed_url|prompt|image|photo|url|payload|exception|stack|cookie|jwt|stripe|credential|phone|address|name|file/i;
 
 const SENSITIVE_VALUE_PATTERN =
   /(?:https?:\/\/|data:|Bearer\s+|sk_(?:live|test)_|eyJ[A-Za-z0-9_-]{10,}|service_role|token=|sig=|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i;
+
+const ALLOWED_SOURCE_VALUES = new Set(['photo', 'stock']);
+const ALLOWED_FAIL_REASONS = new Set([
+  'generation_failed',
+  'invalid_image',
+  'timeout',
+  'internal_error',
+  'unavailable',
+]);
 
 export type FunnelEventRecord = {
   schemaVersion: typeof FUNNEL_SCHEMA_VERSION;
   eventName: FunnelEventName;
   occurredAt: string;
+  audience: FunnelAudience;
+  release_id: string;
   release: ReleaseIdentity;
   sessionId: string;
   source: 'client' | 'server';
@@ -123,6 +88,8 @@ export type SanitizeFunnelEventInput = {
   source?: 'client' | 'server';
   sessionId?: string;
   release?: ReleaseIdentity;
+  audience?: FunnelAudience;
+  isMember?: boolean;
 };
 
 const SESSION_STORAGE_KEY = 'wt_funnel_session';
@@ -173,8 +140,41 @@ const normalizeOccurredAt = (value: number | string | undefined): string => {
   return new Date().toISOString();
 };
 
+const clampPropertyValue = (
+  key: FunnelPropertyKey,
+  value: string | number | boolean | null
+): string | number | boolean | null | undefined => {
+  if (key === 'source' && typeof value === 'string') {
+    return ALLOWED_SOURCE_VALUES.has(value) ? value : undefined;
+  }
+  if (key === 'reason' && typeof value === 'string') {
+    return ALLOWED_FAIL_REASONS.has(value) ? value : 'unavailable';
+  }
+  if (key === 'sku' && typeof value === 'string') {
+    return value === 'revealed_artwork_full_res' ? value : undefined;
+  }
+  if (key === 'surface' && typeof value === 'string') {
+    return value === 'memorial' || value === 'studio' ? value : undefined;
+  }
+  return value;
+};
+
 export const sanitizeFunnelEvent = (input: SanitizeFunnelEventInput): FunnelEventRecord | null => {
   if (!isFunnelEventName(input.eventName)) {
+    return null;
+  }
+
+  if (
+    input.source !== 'server' &&
+    (SERVER_ONLY_FUNNEL_EVENTS as readonly string[]).includes(input.eventName)
+  ) {
+    return null;
+  }
+
+  if (
+    input.source !== 'server' &&
+    (CLIENT_FORBIDDEN_FUNNEL_EVENTS as readonly string[]).includes(input.eventName)
+  ) {
     return null;
   }
 
@@ -187,7 +187,13 @@ export const sanitizeFunnelEvent = (input: SanitizeFunnelEventInput): FunnelEven
     if (!isSafeScalar(value)) {
       continue;
     }
-    properties[key as FunnelPropertyKey] = value;
+    const clamped = clampPropertyValue(key as FunnelPropertyKey, value);
+    if (clamped === undefined) continue;
+    properties[key as FunnelPropertyKey] = clamped;
+  }
+
+  if (!properties.surface) {
+    properties.surface = getProductSurface();
   }
 
   const sessionId =
@@ -198,11 +204,18 @@ export const sanitizeFunnelEvent = (input: SanitizeFunnelEventInput): FunnelEven
       ? input.sessionId
       : resolveFunnelSessionId();
 
+  const release = input.release ?? getReleaseIdentity();
+  const audience =
+    input.audience ??
+    resolveFunnelAudience(Boolean(input.isMember), getProductSurface());
+
   return {
     schemaVersion: FUNNEL_SCHEMA_VERSION,
     eventName: input.eventName,
     occurredAt: normalizeOccurredAt(input.occurredAt),
-    release: input.release ?? getReleaseIdentity(),
+    audience,
+    release_id: formatReleaseId(release),
+    release,
     sessionId,
     source: input.source ?? 'client',
     properties,
@@ -212,29 +225,7 @@ export const sanitizeFunnelEvent = (input: SanitizeFunnelEventInput): FunnelEven
 const mapLegacyKey = (key: string): string => {
   const aliases: Record<string, string> = {
     styleId: 'style_id',
-    userTier: 'user_tier',
-    tier: 'user_tier',
-    isPremium: 'is_premium',
-    hasEnhancements: 'has_enhancements',
-    orderTotal: 'order_total_cents',
-    packId: 'pack_id',
-    priceCents: 'price_cents',
-    sizeId: 'size_id',
-    isRecommended: 'is_recommended',
-    isMostPopular: 'is_most_popular',
-    remainingTokens: 'remaining_tokens',
-    returningStatus: 'returning_status',
-    deviceType: 'device_type',
-    sessionHydrated: 'session_hydrated',
-    elapsedMs: 'elapsed_ms',
-    openCount: 'open_count',
-    completionCount: 'completion_count',
-    windowMs: 'window_ms',
-    requiredTier: 'required_tier',
-    hasUpload: 'has_upload',
     cacheHit: 'cache_hit',
-    wasRecommended: 'was_recommended',
-    wasMostPopular: 'was_most_popular',
   };
   return aliases[key] ?? key;
 };
@@ -243,18 +234,6 @@ export const normalizeFunnelProperties = (payload: Record<string, unknown> = {})
   const next: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(payload)) {
     const mapped = mapLegacyKey(key);
-    if (key === 'orderTotal' && typeof value === 'number') {
-      next.order_total_cents = Math.round(value * 100);
-      continue;
-    }
-    if (mapped === 'authenticated') {
-      if (value === true || value === 'authenticated') {
-        next[mapped] = 'authenticated';
-      } else if (value === false || value === 'guest') {
-        next[mapped] = 'guest';
-      }
-      continue;
-    }
     next[mapped] = value;
   }
   return next;

@@ -4,6 +4,7 @@ import { useStudioEntitlementState } from '@/store/hooks/studio/useStudioEntitle
 import { useStudioPreviewState } from '@/store/hooks/studio/useStudioPreviewState';
 import { useStudioUiState } from '@/store/hooks/studio/useStudioUiState';
 import { useFounderStore } from '@/store/useFounderStore';
+import { useProductSurface } from '@/providers/ProductSurfaceProvider';
 
 const LivingCanvasModal = lazy(() => import('@/components/studio/LivingCanvasModal'));
 const DownloadUpgradeModal = lazy(() => import('@/components/modals/DownloadUpgradeModal'));
@@ -29,11 +30,12 @@ const StudioOverlays = ({ onRequestCanvas }: StudioOverlaysProps) => {
   const { hasCroppedImage } = useStudioPreviewState();
   const { livingCanvasModalOpen } = useStudioUiState();
   const stockLibraryModalOpen = useFounderStore((state) => state.stockLibraryModalOpen);
+  const { rules } = useProductSurface();
 
   return (
     <>
       <Suspense fallback={null}>
-        {livingCanvasModalOpen && <LivingCanvasModal />}
+        {!rules.hideLivingCanvas && livingCanvasModalOpen && <LivingCanvasModal />}
       </Suspense>
 
       <Suspense fallback={null}>
@@ -51,22 +53,24 @@ const StudioOverlays = ({ onRequestCanvas }: StudioOverlaysProps) => {
       </Suspense>
 
       <Suspense fallback={null}>
-        <CanvasUpsellToast
-          show={isCanvasUpsellToastVisible}
-          onDismiss={hideCanvasUpsellToast}
-          onCanvasClick={() => {
-            hideCanvasUpsellToast();
-            onRequestCanvas('rail');
-          }}
-        />
+        {!rules.hideCanvasRail && (
+          <CanvasUpsellToast
+            show={isCanvasUpsellToastVisible}
+            onDismiss={hideCanvasUpsellToast}
+            onCanvasClick={() => {
+              hideCanvasUpsellToast();
+              onRequestCanvas('rail');
+            }}
+          />
+        )}
       </Suspense>
 
       <Suspense fallback={null}>
-        <CanvasCheckoutModalLazy />
+        {!rules.hideCanvasRail && <CanvasCheckoutModalLazy />}
       </Suspense>
 
       <Suspense fallback={null}>
-        {stockLibraryModalOpen && <StockLibraryModal />}
+        {!rules.hideStockLibrary && stockLibraryModalOpen && <StockLibraryModal />}
       </Suspense>
     </>
   );

@@ -4,7 +4,8 @@ import Card from '@/components/ui/Card';
 import { readFileAsDataURL, getImageDimensions, determineOrientationFromDimensions, type FileDataUrlResult } from '@/utils/imageUtils';
 import SmartCropPreview from '@/components/launchpad/SmartCropPreview';
 import AIAnalysisOverlay from '@/components/launchpad/AIAnalysisOverlay';
-import { emitStepOneEvent } from '@/utils/telemetry';
+import { emitStepOneEvent, trackSourceSelected, trackUploadComplete } from '@/utils/telemetry';
+import { useProductSurface } from '@/providers/ProductSurfaceProvider';
 import { ORIENTATION_PRESETS, cacheSmartCropResult, clearSmartCropCacheForImage, SmartCropResult } from '@/utils/smartCrop';
 import { computeImageDigest } from '@/utils/imageHash';
 import type { Orientation } from '@/utils/imageUtils';
@@ -49,6 +50,7 @@ const PhotoUploader = () => {
   } = useUploadActions();
   const { generatePreviews, resetPreviews, shouldAutoGeneratePreviews } = usePreviewActions();
   const openStockLibrary = useFounderStore((state) => state.openStockLibrary);
+  const { rules, surface } = useProductSurface();
   const [isCropperOpen, setCropperOpen] = useState(false);
   const [stage, setStage] = useState<UploadStage>('idle');
   const [pendingOrientation, setPendingOrientation] = useState<Orientation>('square');
@@ -140,6 +142,7 @@ const PhotoUploader = () => {
     setPendingOrientation(detectedOrientation);
     setOrientationTip(ORIENTATION_PRESETS[detectedOrientation].description);
     emitStepOne({ type: 'upload_success', value: detectedOrientation });
+    trackSourceSelected('photo');
 
     // Note: AIAnalysisOverlay will call setStage('preview') when animation completes
   };
@@ -161,6 +164,7 @@ const PhotoUploader = () => {
   };
 
   const handleSamplePhoto = () => {
+    if (rules.hideStockLibrary) return;
     openStockLibrary();
   };
 
@@ -235,6 +239,7 @@ const PhotoUploader = () => {
     setOrientationTip(ORIENTATION_PRESETS[targetOrientation].description);
     markCropReady();
     emitStepOne({ type: 'substep', value: source === 'auto' ? 'complete' : 'crop' });
+    trackUploadComplete('photo');
     setStage('complete');
 
     // Populate "Original Image" style with user's cropped photo immediately
@@ -397,10 +402,18 @@ const PhotoUploader = () => {
                   </svg>
                 </div>
                 <h3 className="font-poppins text-3xl font-bold text-white">
-                  {isDragging ? 'Drop to Transform' : 'Start Your Masterpiece'}
+                  {surface === 'memorial'
+                    ? isDragging
+                      ? 'Drop the photo'
+                      : 'Upload a photo of someone they lost'
+                    : isDragging
+                      ? 'Drop to Transform'
+                      : 'Start Your Masterpiece'}
                 </h3>
                 <p className="font-poppins text-base text-white/80 max-w-auto mx-auto">
-                  Upload your favorite photo and watch it transform into stunning art in seconds
+                  {surface === 'memorial'
+                    ? 'Upload a photo. Choose a style. See them again. No prompts.'
+                    : 'Upload your favorite photo and watch it transform into stunning art in seconds'}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
@@ -408,14 +421,16 @@ const PhotoUploader = () => {
                   onClick={handleSelectFile}
                   className="flex-1 bg-gradient-cta text-white font-semibold px-6 py-4 rounded-xl shadow-glow-purple hover:shadow-glow-purple hover:scale-[1.02] transition-all duration-200"
                 >
-                  Upload Your Photo
+                  {surface === 'memorial' ? 'Upload a photo.' : 'Upload Your Photo'}
                 </button>
-                <button
-                  onClick={handleSamplePhoto}
-                  className="flex-1 border-2 border-white/30 text-white font-medium px-6 py-4 rounded-xl hover:bg-white/10 hover:border-white/50 transition-all duration-200"
-                >
-                  Browse Our Library
-                </button>
+                {!rules.hideStockLibrary && (
+                  <button
+                    onClick={handleSamplePhoto}
+                    className="flex-1 border-2 border-white/30 text-white font-medium px-6 py-4 rounded-xl hover:bg-white/10 hover:border-white/50 transition-all duration-200"
+                  >
+                    Browse Our Library
+                  </button>
+                )}
               </div>
               <p className="text-xs text-center text-white/50">
                 JPG or PNG • Max 10MB • Instant previews

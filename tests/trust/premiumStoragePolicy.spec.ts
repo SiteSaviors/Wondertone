@@ -18,18 +18,24 @@ describe('clean-art storage policy fixtures', () => {
 
   it('drops the unconstrained premium SELECT and does not recreate it', () => {
     const repair = readRepoFile('supabase/migrations/20260903120000_trust_checkpoint_funnel_and_storage.sql');
-    expect(repair).toContain(
-      'DROP POLICY IF EXISTS "Authenticated users can read premium previews via signed URLs"'
+    expect(repair).toMatch(
+      /drop policy if exists "Authenticated users can read premium previews via signed URLs"/i
     );
-    expect(repair).not.toMatch(/CREATE POLICY[\s\S]*Authenticated users can read premium previews/);
+    expect(repair).not.toMatch(
+      /create policy\s+"Authenticated users can read premium previews via signed URLs"/i
+    );
     expect(repair).toContain('funnel_events');
-    expect(repair).toContain('server_checkout_intent_created');
+    expect(repair).toMatch(/funnel_events_event_name_check/i);
   });
 
   it('keeps the manual bucket runbook from reopening the hole', () => {
     const runbook = readRepoFile('CREATE_BUCKETS.sql');
-    expect(runbook).toContain('DROP POLICY IF EXISTS "Authenticated users can read premium previews via signed URLs"');
-    expect(runbook).not.toMatch(/CREATE POLICY[\s\S]*Authenticated users can read premium previews via signed URLs/);
+    expect(runbook).toMatch(
+      /DROP POLICY IF EXISTS "Authenticated users can read premium previews via signed URLs"/i
+    );
+    expect(runbook).not.toMatch(
+      /CREATE POLICY\s+"Authenticated users can read premium previews via signed URLs"/i
+    );
     expect(runbook).toContain('preview-cache-public');
     expect(runbook).toContain('preview-cache-premium');
   });

@@ -98,55 +98,12 @@ export class WatermarkService {
    */
   static async createWatermarkedImage(
     imageBuffer: ArrayBuffer,
-    context: WatermarkContext = 'preview',
-    sessionId: string = 'unknown'
+    _context: WatermarkContext = 'preview',
+    _sessionId: string = 'unknown'
   ): Promise<ArrayBuffer> {
-    const { Image } = await import('https://deno.land/x/imagescript@1.2.15/mod.ts');
-
-    try {
-      // Decode source image
-      const baseImage = await Image.decode(new Uint8Array(imageBuffer));
-      const width = baseImage.width;
-      const height = baseImage.height;
-
-      // Detect orientation
-      const orientation = this.detectOrientation(width, height);
-
-      console.log(`[WatermarkService] Applying ${context} watermark to ${width}x${height} image (${orientation} orientation, session: ${sessionId})`);
-
-      // Get context-specific opacity
-      const opacity = this.OPACITY_MAP[context];
-
-      // Load pre-rendered watermark PNG for orientation
-      const watermarkBuffer = await this.loadWatermark(orientation);
-
-      if (!watermarkBuffer) {
-        console.error('[WatermarkService] Failed to load watermark PNG, returning original image');
-        return imageBuffer;
-      }
-
-      // Decode watermark PNG
-      const watermarkImage = await Image.decode(new Uint8Array(watermarkBuffer));
-
-      // Scale watermark to match base image dimensions
-      const scaledWatermark = watermarkImage.resize(width, height);
-
-      // Apply context-specific opacity to watermark
-      scaledWatermark.opacity(opacity);
-
-      // Composite watermark over base image
-      baseImage.composite(scaledWatermark, 0, 0);
-
-      // Encode as JPEG (92% quality for good balance of size/quality)
-      const output = await baseImage.encodeJPEG(92);
-
-      console.log(`[WatermarkService] Successfully applied ${orientation} watermark grid (${context}, ${(opacity * 100).toFixed(0)}% opacity)`);
-
-      return output.buffer;
-    } catch (error) {
-      console.error('[WatermarkService] Failed to apply watermark, returning original:', error);
-      return imageBuffer; // Fail gracefully
-    }
+    // Product lock: never overlay logos or stamps on a face, especially memorial.
+    // Preview is display-only via a lower-res public file. This method is a no-op.
+    return imageBuffer;
   }
 
   /**

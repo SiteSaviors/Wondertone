@@ -11,27 +11,23 @@ vi.mock('@/store/hooks/studio/useStudioPreviewState', () => ({
   useStudioPreviewState: vi.fn(),
 }));
 
-vi.mock('@/store/hooks/studio/useStudioEntitlementState', () => ({
-  useStudioEntitlementState: vi.fn(),
-}));
-
 vi.mock('@/store/hooks/studio/useStudioUserState', () => ({
   useStudioUserState: vi.fn(),
 }));
 
-vi.mock('@/utils/premiumDownload', () => ({
-  downloadCleanImage: vi.fn(),
+vi.mock('@/utils/artworkDownload', () => ({
+  requestArtworkDownload: vi.fn(),
+  triggerBrowserDownload: vi.fn(),
 }));
 
 vi.mock('@/utils/telemetry', () => ({
-  trackDownloadSuccess: vi.fn(),
+  trackPaywallShown: vi.fn(),
 }));
 
 const { useStudioPreviewState } = await import('@/store/hooks/studio/useStudioPreviewState');
-const { useStudioEntitlementState } = await import('@/store/hooks/studio/useStudioEntitlementState');
 const { useStudioUserState } = await import('@/store/hooks/studio/useStudioUserState');
-const { downloadCleanImage } = await import('@/utils/premiumDownload');
-const { trackDownloadSuccess } = await import('@/utils/telemetry');
+const { requestArtworkDownload, triggerBrowserDownload } = await import('@/utils/artworkDownload');
+const { trackPaywallShown } = await import('@/utils/telemetry');
 
 describe('useDownloadHandlers', () => {
   const showToast = vi.fn();
@@ -93,7 +89,6 @@ describe('useDownloadHandlers', () => {
   };
 
   beforeEach(() => {
-    vi.useFakeTimers();
     showToast.mockClear();
     showUpgradeModal.mockClear();
     openDownloadUpgrade.mockClear();
@@ -105,44 +100,19 @@ describe('useDownloadHandlers', () => {
       currentStyle: null,
       preview: null,
     });
-    (useStudioEntitlementState as vi.Mock).mockReturnValue({
-      requiresWatermark: false,
-      userTier: 'free',
-    });
     (useStudioUserState as vi.Mock).mockReturnValue({
       sessionAccessToken: 'token',
     });
-    (downloadCleanImage as vi.Mock).mockReset();
-    (downloadCleanImage as vi.Mock).mockResolvedValue(undefined);
-    (trackDownloadSuccess as vi.Mock).mockClear();
-    vi.spyOn(global, 'fetch').mockResolvedValue(
-      new Response(new Blob(['test']), {
-        status: 200,
-      })
-    );
-    Object.defineProperty(URL, 'createObjectURL', {
-      configurable: true,
-      value: vi.fn(() => 'blob:url'),
-    });
-    Object.defineProperty(URL, 'revokeObjectURL', {
-      configurable: true,
-      value: vi.fn(),
-    });
-    vi.spyOn(window.HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    (requestArtworkDownload as vi.Mock).mockReset();
+    (triggerBrowserDownload as vi.Mock).mockReset();
+    (trackPaywallShown as vi.Mock).mockClear();
   });
 
   afterEach(() => {
-    vi.clearAllTimers();
-    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
   it('warns when download is requested without a preview', async () => {
-    (useStudioPreviewState as vi.Mock).mockReturnValue({
-      currentStyle: null,
-      preview: null,
-    });
-
     const { handlers, unmount } = await renderDownloadHook();
 
     await act(async () => {
@@ -151,7 +121,7 @@ describe('useDownloadHandlers', () => {
 
     expect(showToast).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: 'Download unavailable',
+        title: 'File unavailable',
       })
     );
     expect(handlers.downloadingHD).toBe(false);
@@ -159,24 +129,18 @@ describe('useDownloadHandlers', () => {
     unmount();
   });
 
-  it('downloads watermarked preview and triggers upgrade + upsell toast', async () => {
+  it('does not download the display preview and shows the paywall when entitlement is missing', async () => {
     (useStudioPreviewState as vi.Mock).mockReturnValue({
       currentStyle: { id: 'style-1', name: 'Aurora Dreams' },
       preview: {
         data: {
-          previewUrl: 'https://cdn.example.com/watermark.jpg',
-          storagePath: null,
-          storageUrl: null,
+          previewUrl: 'https://cdn.example.com/display.jpg',
+          previewLogId: 'log-1',
         },
         status: 'ready',
       },
     });
-    (useStudioEntitlementState as vi.Mock).mockReturnValue({
-      requiresWatermark: true,
-      userTier: 'free',
-    });
-
-    const fetchSpy = vi.spyOn(global, 'fetch');
+    (requestArtworkDownload as vi.Mock).mockResolvedValue({ status: 'paywall' });
 
     const { handlers, unmount } = await renderDownloadHook();
 
@@ -184,34 +148,31 @@ describe('useDownloadHandlers', () => {
       await handlers.handleDownloadHD();
     });
 
-    expect(fetchSpy).toHaveBeenCalledWith('https://cdn.example.com/watermark.jpg', { credentials: 'omit' });
-    expect(openDownloadUpgrade).toHaveBeenCalledTimes(1);
-    expect(trackDownloadSuccess).toHaveBeenCalledWith('free', 'style-1');
-    expect(showCanvasUpsellToast).toHaveBeenCalledTimes(1);
-
-    act(() => {
-      vi.advanceTimersByTime(8000);
+    expect(requestArtworkDownload).toHaveBeenCalledWith({
+      previewLogId: 'log-1',
+      accessToken: 'token',
     });
-    expect(hideCanvasUpsellToast).toHaveBeenCalled();
+    expect(triggerBrowserDownload).not.toHaveBeenCalled();
+    expect(openDownloadUpgrade).toHaveBeenCalledTimes(1);
+    expect(trackPaywallShown).toHaveBeenCalledTimes(1);
 
     unmount();
   });
 
-  it('downloads clean preview via storage path when user is premium', async () => {
+  it('downloads the entitled full-resolution file via the artwork endpoint', async () => {
     (useStudioPreviewState as vi.Mock).mockReturnValue({
       currentStyle: { id: 'style-2', name: 'Golden Hour' },
       preview: {
         data: {
-          previewUrl: 'https://cdn.example.com/preview.jpg',
-          storagePath: null,
-          storageUrl: 'https://cdn.example.com/preview-cache/user123.jpg',
+          previewUrl: 'https://cdn.example.com/display.jpg',
+          previewLogId: 'log-2',
         },
         status: 'ready',
       },
     });
-    (useStudioEntitlementState as vi.Mock).mockReturnValue({
-      requiresWatermark: false,
-      userTier: 'pro',
+    (requestArtworkDownload as vi.Mock).mockResolvedValue({
+      status: 'entitled',
+      downloadUrl: 'https://signed.example/clean.jpg',
     });
 
     const { handlers, unmount } = await renderDownloadHook();
@@ -220,14 +181,11 @@ describe('useDownloadHandlers', () => {
       await handlers.handleDownloadHD();
     });
 
-    expect(downloadCleanImage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        storagePath: 'preview-cache/user123.jpg',
-        accessToken: 'token',
-      })
+    expect(triggerBrowserDownload).toHaveBeenCalledWith(
+      'https://signed.example/clean.jpg',
+      expect.stringContaining('wondertone-golden-hour')
     );
     expect(openDownloadUpgrade).not.toHaveBeenCalled();
-    expect(trackDownloadSuccess).toHaveBeenCalledWith('pro', 'style-2');
 
     unmount();
   });

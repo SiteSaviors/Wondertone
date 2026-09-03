@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Download, ShoppingBag } from 'lucide-react';
 import { trackDownloadCTAClick } from '@/utils/telemetry';
 import { useEntitlementsState } from '@/store/hooks/useEntitlementsStore';
+import { useProductSurface } from '@/providers/ProductSurfaceProvider';
 
 type ActionGridProps = {
   onDownload: () => void;
@@ -26,6 +27,7 @@ export function ActionGrid({
   const [pulseActive, setPulseActive] = useState(false);
   const [hasPulsed, setHasPulsed] = useState(false);
   const { userTier } = useEntitlementsState();
+  const { rules, surface } = useProductSurface();
 
   useEffect(() => {
     if (!createCanvasDisabled && !hasPulsed) {
@@ -43,9 +45,12 @@ export function ActionGrid({
     onDownload();
   };
 
+  const hideCanvas = rules.hideCanvasRail;
+  const fullResLabel = surface === 'memorial' ? 'Get the full-resolution file.' : 'Get the full-resolution file';
+
   return (
     <div className="w-full">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className={`grid gap-3 ${hideCanvas ? 'sm:grid-cols-1' : 'sm:grid-cols-2'}`}>
         <button
           type="button"
           onClick={handleDownload}
@@ -56,13 +61,12 @@ export function ActionGrid({
             <Download className="h-4 w-4" />
           </div>
           <div className="flex flex-1 flex-col text-left">
-            <span className="text-sm font-semibold leading-tight">Download Image</span>
-            <span className="text-xs text-white/70">
-              {isPremiumUser ? '4K JPEG' : 'Upgrade for HD'}
-            </span>
+            <span className="text-sm font-semibold leading-tight">{fullResLabel}</span>
+            <span className="text-xs text-white/70">Preview is display-only</span>
           </div>
         </button>
 
+        {!hideCanvas && (
         <button
           type="button"
           onClick={onCreateCanvas}
@@ -80,6 +84,7 @@ export function ActionGrid({
             <span className="text-xs text-white/70">Gallery-quality prints</span>
           </div>
         </button>
+        )}
       </div>
     </div>
   );

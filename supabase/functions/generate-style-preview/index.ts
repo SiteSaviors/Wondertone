@@ -21,17 +21,17 @@ import { LruMemoryCache } from './cache/memoryCache.ts';
 import { createRequestLogger } from './logging.ts';
 import type { CacheStatus } from './types.ts';
 import { resolveEntitlements, computeRemainingAfterDebet, type EntitlementContext } from './entitlements.ts';
-import { WatermarkService } from './watermarkService.ts';
 import {
   downloadStorageObject,
   parseStoragePath,
   parseStorageUrl,
   buildPublicUrl,
-  buildSignedUrl,
   type StorageObjectRef
 } from '../_shared/storageUtils.ts';
 import { isPrivateStorageBucket } from '../_shared/ownerScopedStorage.ts';
 import { safeErrorMessage } from '../_shared/safeLogger.ts';
+import { createDisplayPreview, toPublicDisplayRef } from '../_shared/displayPreview.ts';
+import { recordGenerationCostEvent } from '../_shared/generationCost.ts';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const PREVIEW_DEBUG_LOGS = Deno.env.get('WT_PREVIEW_DEBUG_LOGS') === 'true';
@@ -603,6 +603,16 @@ serve(async (req) => {
           .eq('id', previewLogId);
       }
 
+      await recordGenerationCostEvent(supabase, {
+        request_id: requestId,
+        style_id: typeof style === 'string' ? style : null,
+        cache_hit: false,
+        provider: null,
+        provider_fallback: false,
+        duration_ms: Date.now() - startTime,
+        outcome: 'failed',
+      });
+
       const payload = createErrorResponse(code, message, requestId, code);
       return respond(JSON.stringify(payload), statusCode);
     };
@@ -963,6 +973,15 @@ serve(async (req) => {
           const ttlForEntry = metadataEntry?.ttl_expires_at ? Math.max(Date.parse(metadataEntry.ttl_expires_at) - Date.now(), 1000) : ttlMs;
           memoryCache.set(cacheKey, cachedFromMemory, ttlForEntry);
         }
+        await recordGenerationCostEvent(supabase, {
+          request_id: requestId,
+          style_id: styleMetadata.styleId,
+          cache_hit: true,
+          provider: null,
+          provider_fallback: false,
+          duration_ms: Date.now() - startTime,
+          outcome: 'cache_hit',
+        });
         return await recordPreviewSuccess(cachedFromMemory, cacheStatus);
       }
 
@@ -988,6 +1007,15 @@ serve(async (req) => {
           if (cacheKey) {
             memoryCache.set(cacheKey, metadataEntry.preview_url, ttlMs);
           }
+          await recordGenerationCostEvent(supabase, {
+            request_id: requestId,
+            style_id: styleMetadata.styleId,
+            cache_hit: true,
+            provider: null,
+            provider_fallback: false,
+            duration_ms: Date.now() - startTime,
+            outcome: 'cache_hit',
+          });
           return await recordPreviewSuccess(metadataEntry.preview_url, cacheStatus);
         } else if (metadataEntry && metadataEntry.preview_url) {
           logger.info('Cache entry expired, regenerating', { cacheKey });
@@ -1030,9 +1058,6 @@ serve(async (req) => {
     });
 
     const persistGeneratedPreview = async (rawOutput: string): Promise<string> => {
-      // OPUS PLAN: Store ONLY clean images, apply watermarks on-the-fly during serving
-      // No pre-watermarking before storage
-
       let finalPreviewUrl = rawOutput;
 
       if (cacheAllowedForRequest && cacheKey) {
@@ -1040,10 +1065,42 @@ serve(async (req) => {
           const storagePath = computeStoragePath(styleMetadata.styleId, normalizedAspectRatio, normalizedQuality, imageDigest);
           const ttlExpiresAt = new Date(Date.now() + ttlMs).toISOString();
 
-          // Single-source storage: Upload clean version only
-          // Watermarking will be applied on-the-fly based on user entitlements
-          const uploadResult = await storageClient.uploadFromUrl(rawOutput, storagePath, {}, false);
-          finalPreviewUrl = uploadResult.publicUrl;
+          const cleanResult = await storageClient.uploadFromUrl(rawOutput, storagePath, {}, false);
+
+          let displayUrl = cleanResult.publicUrl;
+          try {
+            let sourceBuffer: ArrayBuffer;
+            if (rawOutput.startsWith('data:image/')) {
+              const data = rawOutput.split(',')[1] ?? '';
+              const binary = atob(data);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i += 1) {
+                bytes[i] = binary.charCodeAt(i);
+              }
+              sourceBuffer = bytes.buffer;
+            } else {
+              const sourceResponse = await fetch(rawOutput);
+              if (!sourceResponse.ok) {
+                throw new Error(`display_source_fetch_${sourceResponse.status}`);
+              }
+              sourceBuffer = await sourceResponse.arrayBuffer();
+            }
+            const displayBuffer = await createDisplayPreview(sourceBuffer);
+            const displayResult = await storageClient.uploadFromBuffer(
+              displayBuffer,
+              storagePath,
+              { contentType: 'image/jpeg' },
+              true
+            );
+            displayUrl = displayResult.publicUrl;
+          } catch (displayError) {
+            logger.warn('Display preview upload failed; keeping clean reference off the client path', {
+              requestId,
+              message: displayError instanceof Error ? displayError.message : 'unknown',
+            });
+          }
+
+          finalPreviewUrl = displayUrl;
 
           await cacheMetadataService.upsert({
             cacheKey,
@@ -1052,24 +1109,21 @@ serve(async (req) => {
             imageDigest,
             aspectRatio: normalizedAspectRatio,
             quality: normalizedQuality,
-            watermark: false, // Always false - watermarks applied on-demand
-            storagePath: uploadResult.storagePath,
-            previewUrl: uploadResult.publicUrl,
+            watermark: false,
+            storagePath: cleanResult.storagePath,
+            previewUrl: displayUrl,
             ttlExpiresAt,
             sourceRequestId: requestId,
             createdByUserId: cacheOwnerUserId,
             tier: cacheTierKey
           });
 
-          memoryCache.set(cacheKey, uploadResult.publicUrl, ttlMs);
+          memoryCache.set(cacheKey, displayUrl, ttlMs);
 
-          logger.info('Clean preview cached (watermark will be applied on-the-fly)', {
+          logger.info('Clean full-res stored privately; display preview stored publicly', {
             requestId,
             storagePath,
-            requiresWatermark: effectiveWatermark
           });
-
-          cacheStatus = 'hit';
         } catch (error) {
           logger.warn('Failed to cache preview output', { error: error instanceof Error ? error.message : String(error), cacheKey, requestId });
         }
@@ -1224,6 +1278,17 @@ serve(async (req) => {
       }
 
       logger.info('Replicate generation success', { requestId, replicateDurationMs, cacheStatus });
+      await recordGenerationCostEvent(supabase, {
+        request_id: requestId,
+        style_id: styleMetadata.styleId,
+        cache_hit: false,
+        provider: 'replicate_seedream',
+        provider_fallback: false,
+        duration_ms: Date.now() - startTime,
+        provider_predict_time_s:
+          typeof result.metrics?.predict_time === 'number' ? result.metrics.predict_time : null,
+        outcome: 'success',
+      });
       return await recordPreviewSuccess(finalPreviewUrl, cacheStatus);
     }
 
@@ -1251,6 +1316,18 @@ serve(async (req) => {
           cacheStatus
         });
 
+        await recordGenerationCostEvent(supabase, {
+          request_id: requestId,
+          style_id: styleMetadata.styleId,
+          cache_hit: false,
+          provider: 'openai_gpt',
+          provider_fallback: true,
+          duration_ms: Date.now() - startTime,
+          provider_predict_time_s:
+            typeof fallbackResult.metrics?.predict_time === 'number' ? fallbackResult.metrics.predict_time : null,
+          outcome: 'success',
+        });
+
         return await recordPreviewSuccess(finalPreviewUrl, cacheStatus);
       }
 
@@ -1267,44 +1344,6 @@ serve(async (req) => {
     return await recordPreviewFailure('internal_error', 'Internal server error. Please try again.', 500);
   }
 });
-const bufferToDataUrl = (buffer: ArrayBuffer, contentType: string): string => {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i += 1) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  const base64 = btoa(binary);
-  return `data:${contentType};base64,${base64}`;
-};
-
-const loadImageBuffer = async (
-  source: string,
-  supabase: ReturnType<typeof createClient>
-): Promise<{ buffer: ArrayBuffer; contentType: string }> => {
-  if (source.startsWith('data:image/')) {
-    const [header, data] = source.split(',');
-    if (!data) {
-      throw new Error('Invalid data URL supplied for watermarking');
-    }
-    const match = header.match(/^data:(.+);base64$/);
-    const contentType = match?.[1] ?? 'image/jpeg';
-    const binary = atob(data);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i += 1) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return { buffer: bytes.buffer, contentType };
-  }
-
-  const storageRef =
-    parseStorageUrl(source) ?? parseStoragePath(source);
-
-  if (!storageRef) {
-    throw new Error('Preview URL must reference a Wondertone storage path');
-  }
-
-  return await downloadStorageObject(supabase, storageRef);
-};
 
 const extractStoragePath = (sourceUrl: string): string | null => {
   const ref = parseStorageUrl(sourceUrl) ?? parseStoragePath(sourceUrl);
@@ -1312,34 +1351,21 @@ const extractStoragePath = (sourceUrl: string): string | null => {
   return `${ref.bucket}/${ref.path}`;
 };
 
-const PRIVATE_SIGNED_TTL_SECONDS = 15 * 60;
-
 async function presentPreviewToClient(
-  supabase: ReturnType<typeof createClient>,
+  _supabase: ReturnType<typeof createClient>,
   storedUrl: string,
-  requiresWatermark: boolean,
-  requestId: string
+  _requiresWatermark: boolean,
+  _requestId: string
 ): Promise<string> {
-  if (requiresWatermark) {
-    const { buffer, contentType } = await loadImageBuffer(storedUrl, supabase);
-    const watermarkedBuffer = await WatermarkService.createWatermarkedImage(
-      buffer,
-      'preview',
-      requestId
-    );
-    return bufferToDataUrl(watermarkedBuffer, contentType ?? 'image/jpeg');
-  }
-
   const ref = parseStorageUrl(storedUrl) ?? parseStoragePath(storedUrl);
-  if (ref && isPrivateStorageBucket(ref.bucket)) {
-    const signed = await buildSignedUrl(supabase, ref, PRIVATE_SIGNED_TTL_SECONDS);
-    if (!signed) {
-      throw new Error('signed_url_mint_failed');
+  if (ref) {
+    const displayRef = toPublicDisplayRef(ref.bucket, ref.path);
+    if (displayRef.bucket === 'preview-cache-public') {
+      return buildPublicUrl(displayRef);
     }
-    return signed;
-  }
-
-  if (ref && ref.bucket === 'preview-cache-public') {
+    if (isPrivateStorageBucket(ref.bucket)) {
+      throw new Error('private_preview_not_presentable');
+    }
     return buildPublicUrl(ref);
   }
 

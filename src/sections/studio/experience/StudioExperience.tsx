@@ -12,6 +12,7 @@ import { useOrientationBridge } from '@/components/studio/orientation/useOrienta
 import LeftRail from '@/sections/studio/experience/LeftRail';
 import RightRail from '@/sections/studio/experience/RightRail';
 import StudioOverlays from '@/sections/studio/experience/StudioOverlays';
+import { useProductSurface } from '@/providers/ProductSurfaceProvider';
 
 const TokenWarningBanner = lazy(() => import('@/components/studio/TokenWarningBanner'));
 
@@ -25,6 +26,7 @@ const StudioExperience = ({ checkoutNotice, onDismissCheckoutNotice }: StudioExp
   const { currentStyle, hasCroppedImage } = useStudioPreviewState();
   const { entitlements } = useStudioEntitlementState();
   const { openCanvasModal, hydrateEntitlements } = useStudioActions();
+  const { rules } = useProductSurface();
   const { requestOrientationChange, orientationChanging } = useOrientationBridge();
 
   const [showDownloadUpgradeModal, setShowDownloadUpgradeModal] = useState(false);
@@ -104,9 +106,11 @@ const StudioExperience = ({ checkoutNotice, onDismissCheckoutNotice }: StudioExp
           onDismissCheckoutNotice={onDismissCheckoutNotice}
         />
 
-        <Suspense fallback={null}>
-          <TokenWarningBanner />
-        </Suspense>
+        {!rules.hideTokenPacks && (
+          <Suspense fallback={null}>
+            <TokenWarningBanner />
+          </Suspense>
+        )}
 
         <div className="mx-auto block max-w-[1800px] lg:flex">
           <LeftRail />
@@ -118,9 +122,11 @@ const StudioExperience = ({ checkoutNotice, onDismissCheckoutNotice }: StudioExp
             orientationChanging={orientationChanging}
           />
 
-          <RightRail
-            onRequestCanvas={handleOpenCanvas}
-          />
+          {!rules.hideCanvasRail && (
+            <RightRail
+              onRequestCanvas={handleOpenCanvas}
+            />
+          )}
         </div>
 
         <StudioOverlays onRequestCanvas={handleOpenCanvas} />

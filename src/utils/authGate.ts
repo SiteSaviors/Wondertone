@@ -1,4 +1,5 @@
 import { AUTH_GATE_ROLLOUT_PERCENT, REQUIRE_AUTH_FOR_PREVIEW } from '@/config/featureFlags';
+import { getProductSurfaceRules } from '@/config/productSurface';
 
 const BUCKET_STORAGE_KEY = 'wt_auth_gate_bucket_v1';
 
@@ -65,6 +66,9 @@ export const getAuthGateRolloutBucket = (): number => {
 
 export const shouldRequireAuthGate = (sessionUserId: string | null): boolean => {
   if (sessionUserId) {
+    return false;
+  }
+  if (getProductSurfaceRules().hideAuthGateBeforeReveal) {
     return false;
   }
   if (REQUIRE_AUTH_FOR_PREVIEW) {

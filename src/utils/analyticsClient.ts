@@ -75,6 +75,7 @@ export const sendAnalyticsEvent = (eventName: string, payload: Record<string, un
     properties: normalizeFunnelProperties(payload),
     occurredAt: typeof payload.timestamp === 'number' ? payload.timestamp : undefined,
     source: 'client',
+    isMember: Boolean(accessTokenProvider?.()),
   });
 
   if (!sanitized) {

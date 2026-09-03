@@ -8,13 +8,15 @@ import {
 } from '@/utils/funnelAnalytics';
 import { sendAnalyticsEvent } from '@/utils/analyticsClient';
 import { trackOrderCompleted } from '@/utils/telemetry';
+import { setProductSurface } from '@/config/productSurface';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-describe('funnel analytics contract', () => {
+describe('Prism funnel analytics contract v1', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    setProductSurface('studio');
   });
 
   it('keeps the client and edge allowlists in parity', () => {
@@ -30,69 +32,64 @@ describe('funnel analytics contract', () => {
     }
   });
 
-  it('sanitizes allowlisted events and attaches release identity', () => {
+  it('sanitizes allowlisted events with audience and release_id', () => {
     const record = sanitizeFunnelEvent({
-      eventName: 'launchflow_open',
+      eventName: 'visit',
       properties: {
-        source: 'hero',
-        user_tier: 'free',
-        authenticated: 'guest',
+        source: 'photo',
         email: 'customer@example.com',
         prompt: 'never store this',
         signed_url: 'https://example.supabase.co/storage/v1/object/sign/preview-cache-premium/x?token=abc',
         imageUrl: 'data:image/jpeg;base64,AAAA',
       },
       sessionId: 'session-fixture-1',
+      audience: 'memorial',
       release: { gitSha: 'abc123def', buildId: 'build-9' },
     });
 
     expect(record).not.toBeNull();
     expect(record?.schemaVersion).toBe(FUNNEL_SCHEMA_VERSION);
-    expect(record?.eventName).toBe('launchflow_open');
-    expect(record?.release).toEqual({ gitSha: 'abc123def', buildId: 'build-9' });
+    expect(record?.eventName).toBe('visit');
+    expect(record?.audience).toBe('memorial');
+    expect(record?.release_id).toBe('abc123def:build-9');
     expect(record?.properties).toEqual({
-      source: 'hero',
-      user_tier: 'free',
-      authenticated: 'guest',
+      source: 'photo',
     });
     expect(JSON.stringify(record)).not.toMatch(/customer@example.com|signed_url|data:image/);
   });
 
-  it('drops unknown events, client order completion, and sensitive scalars', () => {
+  it('drops unknown events, client conversion, and checkout success', () => {
+    expect(sanitizeFunnelEvent({ eventName: 'entitlement_granted', properties: { sku: 'revealed_artwork_full_res' } })).toBeNull();
     expect(sanitizeFunnelEvent({ eventName: 'order_completed', properties: { user_tier: 'pro' } })).toBeNull();
-    expect(sanitizeFunnelEvent({ eventName: 'random_console_dump', properties: { status: 'ok' } })).toBeNull();
+    expect(sanitizeFunnelEvent({ eventName: 'checkout_success' })).toBeNull();
+    expect(sanitizeFunnelEvent({ eventName: 'launchflow_open' })).toBeNull();
     expect(
       sanitizeFunnelEvent({
-        eventName: 'checkout_step_view',
+        eventName: 'reveal_failed',
         properties: {
-          step: 'payment',
-          user_tier: 'plus',
-          contactEmail: 'hidden@example.com',
+          style_id: 'classic-oil',
+          reason: 'generation_failed',
           previewUrl: 'https://example.com/preview.jpg?token=leak',
         },
       })?.properties
     ).toEqual({
-      step: 'payment',
-      user_tier: 'plus',
+      style_id: 'classic-oil',
+      reason: 'generation_failed',
     });
   });
 
-  it('maps legacy telemetry keys without forwarding photographs or URLs', () => {
+  it('maps legacy style keys without forwarding photographs or URLs', () => {
     const mapped = normalizeFunnelProperties({
       styleId: 'classic-oil',
-      userTier: 'creator',
-      orderTotal: 199,
       cacheHit: true,
       signedUrl: 'https://example.com/secret',
     });
     const record = sanitizeFunnelEvent({
-      eventName: 'order_started',
+      eventName: 'reveal_shown',
       properties: mapped,
     });
     expect(record?.properties).toMatchObject({
       style_id: 'classic-oil',
-      user_tier: 'creator',
-      order_total_cents: 19900,
       cache_hit: true,
     });
     expect(record?.properties).not.toHaveProperty('signedUrl');
@@ -104,8 +101,8 @@ describe('funnel analytics contract', () => {
     trackOrderCompleted('pro', 249, true, 'US');
     expect(fetchMock).not.toHaveBeenCalled();
     expect(sanitizeFunnelEvent({ eventName: 'order_completed' })).toBeNull();
-    expect(sanitizeFunnelEvent({ eventName: 'order_started', properties: { user_tier: 'free' } })?.eventName).toBe(
-      'order_started'
+    expect(sanitizeFunnelEvent({ eventName: 'checkout_started', properties: { sku: 'revealed_artwork_full_res' } })?.eventName).toBe(
+      'checkout_started'
     );
   });
 });

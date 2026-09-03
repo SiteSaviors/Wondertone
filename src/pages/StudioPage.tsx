@@ -9,6 +9,8 @@ import InstantBreadthStrip from '@/sections/studio/InstantBreadthStrip';
 import StyleInspirationSection from '@/sections/studio/StyleInspirationSection';
 import SocialProofSection from '@/sections/studio/SocialProofSection';
 import CanvasQualityStrip from '@/sections/studio/CanvasQualityStrip';
+import { ProductSurfaceProvider } from '@/providers/ProductSurfaceProvider';
+import { trackVisit } from '@/utils/telemetry';
 
 const LaunchflowAccordionLazy = lazy(() => import('@/sections/LaunchpadLayout'));
 const StudioConfiguratorLazy = lazy(() => import('@/sections/StudioConfigurator'));
@@ -38,6 +40,10 @@ const StudioPage = () => {
   const { setPreselectedStyle } = useStyleCatalogActions();
   const { hydrateEntitlements } = useEntitlementsActions();
   const [checkoutNotice, setCheckoutNotice] = useState<{ variant: 'success' | 'warning'; message: string } | null>(null);
+
+  useEffect(() => {
+    trackVisit();
+  }, []);
 
   useEffect(() => {
     const queryValue = searchParams.get('preselected_style');
@@ -75,25 +81,27 @@ const StudioPage = () => {
   }, [location.pathname, location.search, hydrateEntitlements, navigate]);
 
   return (
-    <LazyMotion features={domAnimation}>
-      <div className="bg-slate-950 min-h-screen text-white">
-        <FounderNavigation />
-        <ProductHeroSection />
-        <Suspense fallback={<LaunchflowSkeleton />}>
-          <LaunchflowAccordionLazy />
-        </Suspense>
-        <Suspense fallback={<StudioConfiguratorSkeleton />}>
-          <StudioConfiguratorLazy
-            checkoutNotice={checkoutNotice}
-            onDismissCheckoutNotice={() => setCheckoutNotice(null)}
-          />
-        </Suspense>
-        <InstantBreadthStrip />
-        <StyleInspirationSection />
-        <SocialProofSection />
-        <CanvasQualityStrip />
-      </div>
-    </LazyMotion>
+    <ProductSurfaceProvider surface="studio">
+      <LazyMotion features={domAnimation}>
+        <div className="bg-slate-950 min-h-screen text-white">
+          <FounderNavigation />
+          <ProductHeroSection />
+          <Suspense fallback={<LaunchflowSkeleton />}>
+            <LaunchflowAccordionLazy />
+          </Suspense>
+          <Suspense fallback={<StudioConfiguratorSkeleton />}>
+            <StudioConfiguratorLazy
+              checkoutNotice={checkoutNotice}
+              onDismissCheckoutNotice={() => setCheckoutNotice(null)}
+            />
+          </Suspense>
+          <InstantBreadthStrip />
+          <StyleInspirationSection />
+          <SocialProofSection />
+          <CanvasQualityStrip />
+        </div>
+      </LazyMotion>
+    </ProductSurfaceProvider>
   );
 };
 

@@ -2,8 +2,11 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import {
   FUNNEL_SCHEMA_VERSION,
-  isAllowlistedFunnelEvent,
+  formatReleaseId,
+  isClientPersistableFunnelEvent,
+  isFunnelAudience,
   sanitizeFunnelProperties,
+  type FunnelAudience,
 } from '../_shared/funnelEventContract.ts';
 import { createSafeLogger, safeErrorMessage } from '../_shared/safeLogger.ts';
 
@@ -29,6 +32,8 @@ type IngestEvent = {
   occurredAt?: string;
   sessionId?: string;
   source?: string;
+  audience?: string;
+  release_id?: string;
   release?: { gitSha?: string; buildId?: string };
   properties?: Record<string, unknown>;
 };
@@ -41,6 +46,13 @@ const normalizeSessionId = (value: unknown): string | null => {
   if (!trimmed || trimmed.length > SESSION_ID_MAX) return null;
   if (/[^\w-:]/.test(trimmed)) return null;
   return trimmed;
+};
+
+const resolveAudience = (claimed: unknown, userId: string | null): FunnelAudience => {
+  if (claimed === 'memorial') return 'memorial';
+  if (userId) return 'member';
+  if (isFunnelAudience(claimed) && claimed !== 'member') return claimed;
+  return 'guest';
 };
 
 serve(async (req) => {
@@ -86,11 +98,11 @@ serve(async (req) => {
     const rows = [];
     let rejected = 0;
     for (const event of rawEvents.slice(0, MAX_EVENTS)) {
-      if (!event || typeof event.eventName !== 'string' || !isAllowlistedFunnelEvent(event.eventName)) {
+      if (!event || typeof event.eventName !== 'string' || !isClientPersistableFunnelEvent(event.eventName)) {
         rejected += 1;
         continue;
       }
-      if (event.source === 'server' && event.eventName !== 'server_checkout_intent_created') {
+      if (event.source === 'server') {
         rejected += 1;
         continue;
       }
@@ -107,6 +119,10 @@ serve(async (req) => {
         typeof event.release?.buildId === 'string' && event.release.buildId.length <= 64
           ? event.release.buildId
           : RELEASE_BUILD_ID;
+      const releaseId =
+        typeof event.release_id === 'string' && event.release_id.length <= 129
+          ? event.release_id
+          : formatReleaseId(releaseSha, releaseBuildId);
 
       rows.push({
         schema_version: FUNNEL_SCHEMA_VERSION,
@@ -114,9 +130,11 @@ serve(async (req) => {
         occurred_at: occurredAt,
         release_sha: releaseSha,
         release_build_id: releaseBuildId,
+        release_id: releaseId,
+        audience: resolveAudience(event.audience, userId),
         session_id: sessionId,
         user_id: userId,
-        source: event.eventName === 'server_checkout_intent_created' ? 'server' : 'client',
+        source: 'client',
         properties: sanitizeFunnelProperties(event.properties),
       });
     }

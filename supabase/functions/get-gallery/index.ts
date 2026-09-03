@@ -1,16 +1,15 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { WatermarkService } from '../generate-style-preview/watermarkService.ts';
 import {
   buildPublicUrl,
   buildSignedUrl,
-  downloadStorageObject,
   parseStoragePath,
   parseStorageUrl,
   type StorageObjectRef
 } from '../_shared/storageUtils.ts';
-import { isPrivateStorageBucket, toOwnerScopedClientUrl } from '../_shared/ownerScopedStorage.ts';
+import { isPrivateStorageBucket } from '../_shared/ownerScopedStorage.ts';
+import { toPublicDisplayRef } from '../_shared/displayPreview.ts';
 import { createSafeLogger, safeErrorMessage } from '../_shared/safeLogger.ts';
 
 const logger = createSafeLogger('get-gallery');
@@ -56,42 +55,11 @@ function clampPositiveInt(value: string | number | null | undefined, fallback: n
   return Math.floor(parsed);
 }
 
-const bufferToDataUrl = (buffer: ArrayBuffer, contentType: string): string => {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i += 1) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  const base64 = btoa(binary);
-  return `data:${contentType};base64,${base64}`;
-};
-
-const buildDisplayUrl = async (
-  supabase: ReturnType<typeof createClient>,
-  storageRef: StorageObjectRef,
-  context: 'preview' | 'download',
-  requiresWatermark: boolean
-): Promise<string> => {
-  if (!requiresWatermark) {
-    const scoped = await toOwnerScopedClientUrl(supabase, storageRef);
-    if (!scoped) {
-      throw new Error('signed_url_mint_failed');
-    }
-    return scoped;
-  }
-
-  try {
-    const { buffer, contentType } = await downloadStorageObject(supabase, storageRef);
-    const watermarkedBuffer = await WatermarkService.createWatermarkedImage(
-      buffer,
-      context,
-      WatermarkService.generateSessionId()
-    );
-    return bufferToDataUrl(watermarkedBuffer, contentType ?? 'image/jpeg');
-  } catch (error) {
-    logger.error('Failed to apply watermark on-the-fly', { message: safeErrorMessage(error) });
-    throw error;
-  }
+const buildDisplayUrl = (
+  storageRef: StorageObjectRef
+): string => {
+  const displayRef = toPublicDisplayRef(storageRef.bucket, storageRef.path);
+  return buildPublicUrl(displayRef);
 };
 
 const resolveStorageRef = (value: string | null | undefined): StorageObjectRef | null => {
@@ -219,20 +187,13 @@ serve(async (req: Request) => {
         }
 
         if (downloadRequested) {
-          const downloadUrl = await buildDisplayUrl(supabase, storageRef, 'download', requiresWatermark);
-          const payload = {
-            downloadUrl,
-            storageUrl: isPrivateStorageBucket(storageRef.bucket) ? null : buildPublicUrl(storageRef),
-            storagePath: `${storageRef.bucket}/${storageRef.path}`,
-            requiresWatermark
-          };
           return new Response(
-            JSON.stringify(payload),
-            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            JSON.stringify({ error: 'entitlement_required', sku: 'revealed_artwork_full_res' }),
+            { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
 
-        const displayUrl = await buildDisplayUrl(supabase, storageRef, 'preview', requiresWatermark);
+        const displayUrl = buildDisplayUrl(storageRef);
         const thumbnailRef = itemRow.thumbnail_storage_path
           ? parseStoragePath(itemRow.thumbnail_storage_path)
           : null;
@@ -371,7 +332,7 @@ serve(async (req: Request) => {
 
             let displayUrl: string;
             try {
-              displayUrl = await buildDisplayUrl(supabase, storageRef, 'preview', requiresWatermark);
+              displayUrl = buildDisplayUrl(storageRef);
             } catch {
               logger.warn('Skipping item that could not be presented safely');
               return null;

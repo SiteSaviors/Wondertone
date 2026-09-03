@@ -6,6 +6,7 @@ import { ORIENTATION_PRESETS } from '@/utils/smartCrop';
 import StudioEmptyState from './StudioEmptyState';
 import ActionGrid from '@/components/studio/ActionGrid';
 import useDeferredRender from '@/hooks/useDeferredRender';
+import { useProductSurface } from '@/providers/ProductSurfaceProvider';
 
 const CanvasInRoomPreview = lazy(() => import('@/components/studio/CanvasInRoomPreview'));
 const StyleForgeOverlay = lazy(() => import('@/components/studio/StyleForgeOverlay'));
@@ -149,6 +150,7 @@ const CanvasPreviewPanel = ({
   canvasLocked = false,
   previewLocked = false,
 }: CanvasPreviewPanelProps) => {
+  const { rules, surface } = useProductSurface();
   const orientationMeta = ORIENTATION_PRESETS[orientation];
   const orientationActionDisabled =
     !hasCroppedImage || orientationPreviewPending || orientationChanging || previewLocked;
@@ -233,7 +235,7 @@ const CanvasPreviewPanel = ({
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span className="hidden sm:inline">Ready to print</span>
+                    <span className="hidden sm:inline">{surface === 'memorial' ? 'See them again' : 'Ready to print'}</span>
                     <span className="sm:hidden">Ready</span>
                   </span>
                 </div>
@@ -278,15 +280,17 @@ const CanvasPreviewPanel = ({
                 <UploadCloud className="h-5 w-5" aria-hidden="true" />
                 <span>Upload New Photo</span>
               </button>
-              <button
-                type="button"
-                onClick={onBrowseStyles}
-                className="inline-flex flex-1 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-blue-500 px-6 py-4 text-sm font-semibold text-white shadow-[0_15px_40px_rgba(129,69,255,0.35)] transition hover:shadow-[0_18px_45px_rgba(129,69,255,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-200/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
-                aria-label="Browse our stock image library"
-              >
-                <Images className="h-5 w-5" aria-hidden="true" />
-                <span>Browse Library</span>
-              </button>
+              {!rules.hideStockLibrary && (
+                <button
+                  type="button"
+                  onClick={onBrowseStyles}
+                  className="inline-flex flex-1 items-center justify-center gap-3 rounded-full bg-gradient-to-r from-fuchsia-500 via-purple-500 to-blue-500 px-6 py-4 text-sm font-semibold text-white shadow-[0_15px_40px_rgba(129,69,255,0.35)] transition hover:shadow-[0_18px_45px_rgba(129,69,255,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-200/80 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  aria-label="Browse our stock image library"
+                >
+                  <Images className="h-5 w-5" aria-hidden="true" />
+                  <span>Browse Library</span>
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -318,27 +322,29 @@ const CanvasPreviewPanel = ({
           </div>
         )}
 
-        <LazyGalleryQuickview />
+        {!rules.hideSocialProof && <LazyGalleryQuickview />}
       </div>
 
-      <div className="hidden lg:block w-full max-w-[720px] mt-8">
-        <div className="mb-6 text-center space-y-3">
-          <span className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/[0.08] px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.32em] text-white/60">
-            Canvas Preview
-          </span>
-          <h3 className="font-poppins text-[28px] font-semibold text-white sm:text-[32px]">
-            See it in your space
-          </h3>
-          <p className="font-poppins text-sm text-white/70 max-w-md mx-auto sm:text-base">
-            Visualize your artwork in a curated living room setting.
-          </p>
+      {!rules.hideCanvasRail && (
+        <div className="hidden lg:block w-full max-w-[720px] mt-8">
+          <div className="mb-6 text-center space-y-3">
+            <span className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/[0.08] px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.32em] text-white/60">
+              Canvas Preview
+            </span>
+            <h3 className="font-poppins text-[28px] font-semibold text-white sm:text-[32px]">
+              See it in your space
+            </h3>
+            <p className="font-poppins text-sm text-white/70 max-w-md mx-auto sm:text-base">
+              Visualize your artwork in a curated living room setting.
+            </p>
+          </div>
+          <Suspense fallback={<CanvasPreviewFallback />}>
+            <CanvasInRoomPreview enableHoverEffect showDimensions={false} />
+          </Suspense>
         </div>
-        <Suspense fallback={<CanvasPreviewFallback />}>
-          <CanvasInRoomPreview enableHoverEffect showDimensions={false} />
-        </Suspense>
-      </div>
+      )}
 
-      {previewStateStatus === 'ready' && currentStyle && (
+      {!rules.hideCanvasRail && previewStateStatus === 'ready' && currentStyle && (
         <div className="w-full max-w-[720px] mt-8">
           <SellingPointsPanel onCreateCanvas={onCreateCanvas} />
         </div>

@@ -3,6 +3,8 @@ import { ORIENTATION_PRESETS } from '@/utils/smartCrop';
 import { persistOriginalUpload } from '@/utils/sourceUploadApi';
 import { createPreviewLog } from '@/utils/previewLogApi';
 import { emitStockModalClosed } from '@/utils/stockLibrary/telemetry';
+import { trackSourceSelected, trackUploadComplete } from '@/utils/telemetry';
+import { getProductSurfaceRules } from '@/config/productSurface';
 import type { StockLibrarySliceCreator } from '@/store/founder/slices/stockLibrary/types';
 
 export const createStockLibrarySelectionSlice: StockLibrarySliceCreator = (set, get) => ({
@@ -19,6 +21,11 @@ export const createStockLibrarySelectionSlice: StockLibrarySliceCreator = (set, 
       appliedStockImage: null,
     }),
   continueWithStockImage: async () => {
+    if (getProductSurfaceRules().hideStockLibrary) {
+      console.warn('[stockLibrarySlice] stock library is disabled on this surface');
+      return;
+    }
+
     const { appliedStockImage } = get();
 
     if (!appliedStockImage) {
@@ -40,6 +47,9 @@ export const createStockLibrarySelectionSlice: StockLibrarySliceCreator = (set, 
       get().setOrientationTip(ORIENTATION_PRESETS[appliedStockImage.orientation]?.description ?? null);
       get().markCropReady();
       get().resetPreviews();
+
+      trackSourceSelected('stock');
+      trackUploadComplete('stock');
 
       get().setPreviewState('original-image', {
         status: 'ready',

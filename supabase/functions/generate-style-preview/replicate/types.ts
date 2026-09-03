@@ -17,8 +17,13 @@ export interface ReplicateGenerationResponse {
   ok: boolean;
   output?: string | string[];
   error?: string;
+  technicalError?: string;
+  statusCode?: number;
   status?: string;
   id?: string;
+  metrics?: {
+    predict_time?: number;
+  };
   urls?: {
     get?: string;
   };

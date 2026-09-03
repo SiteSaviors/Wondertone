@@ -1,4 +1,4 @@
-import { sendAnalyticsEvent } from '@/utils/analyticsClient';
+import { trackVisit } from '@/utils/telemetry';
 import { useFounderStore } from '@/store/useFounderStore';
 
 export type LaunchflowOpenSource =
@@ -87,7 +87,7 @@ const recordHealthSignal = (event: LaunchflowHealthEvent, shared: LaunchflowEven
       deficit,
       windowMs: HEALTH_WINDOW_MS,
     };
-    sendAnalyticsEvent('launchflow_health_warning', payload);
+    // Health warnings are operational, not Prism persist events.
     logLaunchflowEvent('health_warning', payload);
   }
 };
@@ -98,7 +98,7 @@ export const trackLaunchflowOpened = (source: LaunchflowOpenSource) => {
     source,
   };
   logLaunchflowEvent('open', context);
-  sendAnalyticsEvent('launchflow_open', context);
+  trackVisit();
   recordHealthSignal('open', context);
 };
 
@@ -108,7 +108,7 @@ export const trackLaunchflowCompleted = (elapsedMs?: number) => {
     elapsedMs: typeof elapsedMs === 'number' ? Math.max(0, Math.round(elapsedMs)) : undefined,
   };
   logLaunchflowEvent('complete', context);
-  sendAnalyticsEvent('launchflow_complete', context);
+  // Launchflow complete is not a Prism persist event.
   recordHealthSignal('complete', context);
 };
 
@@ -118,7 +118,7 @@ export const trackLaunchflowEditReopen = (source: LaunchflowEditSource) => {
     source,
   };
   logLaunchflowEvent('edit_reopen', context);
-  sendAnalyticsEvent('launchflow_edit_reopen', context);
+  // Edit reopen is not a Prism persist event.
 };
 
 export const trackLaunchflowEmptyStateInteraction = (action: LaunchflowEmptyStateAction) => {
@@ -127,5 +127,5 @@ export const trackLaunchflowEmptyStateInteraction = (action: LaunchflowEmptyStat
     action,
   };
   logLaunchflowEvent('empty_state_interaction', context);
-  sendAnalyticsEvent('launchflow_empty_state_interaction', context);
+  // Empty-state interactions are not Prism persist events.
 };
