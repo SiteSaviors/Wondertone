@@ -405,7 +405,7 @@ const PhotoUploader = () => {
                   {surface === 'memorial'
                     ? isDragging
                       ? 'Drop the photo'
-                      : 'Upload a photo of someone they lost'
+                      : 'Upload a photo of someone you lost'
                     : isDragging
                       ? 'Drop to Transform'
                       : 'Start Your Masterpiece'}

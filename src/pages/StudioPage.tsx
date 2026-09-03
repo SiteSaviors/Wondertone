@@ -8,7 +8,7 @@ import InstantBreadthStrip from '@/sections/studio/InstantBreadthStrip';
 import StyleInspirationSection from '@/sections/studio/StyleInspirationSection';
 import SocialProofSection from '@/sections/studio/SocialProofSection';
 import CanvasQualityStrip from '@/sections/studio/CanvasQualityStrip';
-import { ProductSurfaceProvider } from '@/providers/ProductSurfaceProvider';
+import { ProductSurfaceProvider, useProductSurface } from '@/providers/ProductSurfaceProvider';
 import { trackVisit } from '@/utils/telemetry';
 
 const LaunchflowAccordionLazy = lazy(() => import('@/sections/LaunchpadLayout'));
@@ -30,6 +30,16 @@ const StudioConfiguratorSkeleton = () => (
     </div>
   </section>
 );
+
+const FirstPathFulfillmentModules = () => {
+  const { rules } = useProductSurface();
+  return (
+    <>
+      {!rules.hideSocialProof && <SocialProofSection />}
+      {!rules.hideCanvasRail && <CanvasQualityStrip />}
+    </>
+  );
+};
 
 const StudioPage = () => {
   const [searchParams] = useSearchParams();
@@ -91,8 +101,7 @@ const StudioPage = () => {
           </Suspense>
           <InstantBreadthStrip />
           <StyleInspirationSection />
-          <SocialProofSection />
-          <CanvasQualityStrip />
+          <FirstPathFulfillmentModules />
         </div>
       </LazyMotion>
     </ProductSurfaceProvider>

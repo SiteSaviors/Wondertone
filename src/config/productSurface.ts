@@ -55,11 +55,11 @@ export const getProductSurfaceRules = (surface: ProductSurface = activeSurface):
 
   return {
     hideStockLibrary: false,
-    hideCanvasRail: false,
+    hideCanvasRail: true,
     hideLivingCanvas: true,
-    hideTokenPacks: false,
-    hideSubscriptionTiers: false,
-    hideSocialProof: false,
+    hideTokenPacks: true,
+    hideSubscriptionTiers: true,
+    hideSocialProof: true,
     hidePressLogos: false,
     hideAuthGateBeforeReveal: false,
     allowPreviewDownload: false,

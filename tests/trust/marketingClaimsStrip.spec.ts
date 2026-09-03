@@ -78,4 +78,12 @@ describe('marketing claims strip', () => {
     expect(tiers).not.toMatch(/Living Canvas/i);
     expect(benefits).not.toMatch(/Living Canvas/i);
   });
+
+  it('does not ship invented spotlight quotes', () => {
+    const social = readFileSync(path.join(SRC_ROOT, 'config/socialProofContent.ts'), 'utf8');
+    expect(social).toMatch(/export const SPOTLIGHTS: ReadonlyArray<SpotlightStory> = \[\];/);
+    expect(social).not.toContain('premium polish overnight');
+    expect(social).not.toContain('Sarah M.');
+    expect(social).not.toContain('We cried seeing');
+  });
 });

@@ -59,6 +59,9 @@ describe('memorial, legal shells, and SPA routing', () => {
     expect(memorial).toContain('Bring them back in art.');
     expect(memorial).toContain('Upload a photo. Choose a style. See them again. No prompts.');
     expect(memorial).toContain('Upload a photo.');
+    const uploader = readRepoFile('src/components/launchpad/PhotoUploader.tsx');
+    expect(uploader).toContain('Upload a photo of someone you lost');
+    expect(uploader).not.toContain('someone they lost');
     expect(memorial).not.toMatch(/\$\d/);
     expect(memorial).not.toMatch(/Living Canvas/);
     expect(memorial).not.toMatch(/★|stars|press/i);

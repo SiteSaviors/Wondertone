@@ -60,6 +60,10 @@ describe('Prism canonical site completeness', () => {
     const breadth = readRepoFile('src/sections/studio/InstantBreadthStrip.tsx');
 
     expect(surface).toMatch(/hideLivingCanvas:\s*true/);
+    expect(surface).not.toMatch(/hideCanvasRail:\s*false/);
+    expect(surface).not.toMatch(/hideTokenPacks:\s*false/);
+    expect(surface).not.toMatch(/hideSubscriptionTiers:\s*false/);
+    expect(surface).not.toMatch(/hideSocialProof:\s*false/);
     expect(actionGrid).toContain('revealed_artwork_full_res');
     expect(actionGrid).not.toContain('Create Canvas Art');
     expect(nav).not.toContain('OrdersPopover');
