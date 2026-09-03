@@ -8,7 +8,6 @@ import { MemoryRouter } from 'react-router-dom';
 import StudioConfigurator from '@/sections/StudioConfigurator';
 import { useFounderStore } from '@/store/useFounderStore';
 import * as studioAnalytics from '@/utils/studioV2Analytics';
-import * as telemetry from '@/utils/telemetry';
 
 const createTestPreviewEntry = (orientation: string) => ({
   status: 'ready' as const,
@@ -187,10 +186,7 @@ describe('Studio orientation + canvas CTA integration', () => {
     expect(cropperSpy.mock.calls[0][0]).toBe(useFounderStore.getState().orientation);
   });
 
-  it('tracks the center Create Canvas CTA only once across rapid clicks', async () => {
-    const canvasAnalyticsSpy = vi.spyOn(studioAnalytics, 'trackStudioV2CanvasCtaClick').mockImplementation(() => {});
-    const canvasPanelSpy = vi.spyOn(telemetry, 'trackCanvasPanelOpen').mockImplementation(() => {});
-
+  it('keeps the center post-reveal CTA on revealed_artwork_full_res only', async () => {
     act(() => {
       root.render(
         <MemoryRouter>
@@ -199,17 +195,9 @@ describe('Studio orientation + canvas CTA integration', () => {
       );
     });
 
-    const createCanvasButton = await waitForButton(container, 'Create Canvas Art');
-
-    await act(async () => {
-      createCanvasButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      createCanvasButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    });
-
-    await waitUntil(() => {
-      expect(canvasAnalyticsSpy).toHaveBeenCalledTimes(1);
-      expect(canvasPanelSpy).toHaveBeenCalledTimes(1);
-    });
-    expect(canvasPanelSpy).toHaveBeenCalledWith('free');
+    const fullResButton = await waitForButton(container, 'Get the full-resolution file');
+    expect(fullResButton.getAttribute('data-sku')).toBe('revealed_artwork_full_res');
+    expect(container.textContent).not.toContain('Create Canvas Art');
+    expect(container.textContent).not.toMatch(/ORDERS API COMING SOON/i);
   });
 });

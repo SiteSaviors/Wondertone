@@ -8,7 +8,6 @@ import {
   type FocusEventHandler,
   type PointerEventHandler,
 } from 'react';
-import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import { useStyleCatalogState } from '@/store/hooks/useStyleCatalogStore';
 import type { StyleOption } from '@/store/founder/storeTypes';
@@ -70,7 +69,6 @@ const normalizeOffset = (value: number, segment: number) => {
 
 const InstantBreadthStrip = () => {
   const { styles } = useStyleCatalogState();
-  const navigate = useNavigate();
   const openStockLibrary = useFounderStore((state) => state.openStockLibrary);
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -126,10 +124,6 @@ const InstantBreadthStrip = () => {
 
   const handleOpenSample = () => {
     openStockLibrary();
-  };
-
-  const handleNavigatePricing = () => {
-    navigate('/pricing');
   };
 
   const shouldDuplicate = isInteractive && curatedItems.length > 0;
@@ -351,16 +345,6 @@ const InstantBreadthStrip = () => {
             )}
           >
             Browse Our Library →
-          </button>
-          <button
-            type="button"
-            onClick={handleNavigatePricing}
-            className={clsx(
-              'inline-flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 px-7 py-2.5 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(79,70,229,0.45)] transition',
-              'hover:shadow-[0_22px_65px_rgba(79,70,229,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/70'
-            )}
-          >
-            Upgrade to Creator →
           </button>
         </div>
 

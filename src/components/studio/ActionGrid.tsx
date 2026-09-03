@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react';
-import { Download, ShoppingBag } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { trackDownloadCTAClick } from '@/utils/telemetry';
 import { useEntitlementsState } from '@/store/hooks/useEntitlementsStore';
 import { useProductSurface } from '@/providers/ProductSurfaceProvider';
 
 type ActionGridProps = {
   onDownload: () => void;
-  onCreateCanvas: () => void;
+  onCreateCanvas?: () => void;
   downloading: boolean;
   downloadDisabled: boolean;
-  createCanvasDisabled: boolean;
+  createCanvasDisabled?: boolean;
   isPremiumUser: boolean;
 };
 
@@ -18,44 +17,29 @@ const gradientButton =
 
 export function ActionGrid({
   onDownload,
-  onCreateCanvas,
   downloading,
   downloadDisabled,
-  createCanvasDisabled,
   isPremiumUser,
 }: ActionGridProps) {
-  const [pulseActive, setPulseActive] = useState(false);
-  const [hasPulsed, setHasPulsed] = useState(false);
   const { userTier } = useEntitlementsState();
-  const { rules, surface } = useProductSurface();
-
-  useEffect(() => {
-    if (!createCanvasDisabled && !hasPulsed) {
-      setPulseActive(true);
-      setHasPulsed(true);
-      const timer = window.setTimeout(() => setPulseActive(false), 1800);
-      return () => window.clearTimeout(timer);
-    }
-    setPulseActive(false);
-    return undefined;
-  }, [createCanvasDisabled, hasPulsed]);
+  const { surface } = useProductSurface();
 
   const handleDownload = () => {
     trackDownloadCTAClick(userTier, isPremiumUser);
     onDownload();
   };
 
-  const hideCanvas = rules.hideCanvasRail;
   const fullResLabel = surface === 'memorial' ? 'Get the full-resolution file.' : 'Get the full-resolution file';
 
   return (
     <div className="w-full">
-      <div className={`grid gap-3 ${hideCanvas ? 'sm:grid-cols-1' : 'sm:grid-cols-2'}`}>
+      <div className="grid gap-3 sm:grid-cols-1">
         <button
           type="button"
           onClick={handleDownload}
           disabled={downloading || downloadDisabled}
           className={`${gradientButton} flex items-center justify-between gap-3 px-6 py-4`}
+          data-sku="revealed_artwork_full_res"
         >
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-white/20 shadow-glow-soft">
             <Download className="h-4 w-4" />
@@ -65,26 +49,6 @@ export function ActionGrid({
             <span className="text-xs text-white/70">Preview is display-only</span>
           </div>
         </button>
-
-        {!hideCanvas && (
-        <button
-          type="button"
-          onClick={onCreateCanvas}
-          disabled={createCanvasDisabled}
-          title={createCanvasDisabled ? 'Upload & crop a photo first' : 'Open canvas configurator'}
-          className={`${gradientButton} flex items-center justify-between gap-3 px-6 py-4 ${
-            pulseActive ? 'motion-safe:animate-[pulse_1.2s_ease-in-out]' : ''
-          }`}
-        >
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-white/20 shadow-glow-soft">
-            <ShoppingBag className="h-4 w-4" />
-          </div>
-          <div className="flex flex-1 flex-col text-left">
-            <span className="text-sm font-semibold leading-tight">Create Canvas Art</span>
-            <span className="text-xs text-white/70">Gallery-quality prints</span>
-          </div>
-        </button>
-        )}
       </div>
     </div>
   );

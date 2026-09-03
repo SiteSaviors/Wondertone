@@ -61,9 +61,6 @@ const OrdersPopoverComponent = ({ cartCount, onNavigateToCheckout }: OrdersPopov
             <Sparkles className="h-4 w-4" />
             Resume canvas checkout
           </button>
-          <p className="mt-3 text-center text-[11px] uppercase tracking-[0.32em] text-white/40">
-            Orders API coming soon
-          </p>
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

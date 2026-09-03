@@ -4,23 +4,23 @@ import Card from '@/components/ui/Card';
 const steps = [
   {
     step: '01',
-    title: 'Upload & Sense',
-    description: 'Smart orientation detection, auto-crop, and emotional tagging set the stage for recommendations.',
+    title: 'Upload',
+    description: 'Add a picture.',
   },
   {
     step: '02',
-    title: 'Explore Styles',
-    description: 'Parallel previews stream into the rail with blur placeholders so you never wait on a spinner.',
+    title: 'Choose a style',
+    description: 'Pick a look.',
   },
   {
     step: '03',
-    title: 'Customize & Upsell',
-    description: 'Canvas, frame, and digital options adjust the sticky order rail in real time.',
+    title: 'See it',
+    description: 'Reveal the artwork.',
   },
   {
     step: '04',
-    title: 'Celebrate & Share',
-    description: 'Guest checkout wraps in seconds while tokens, referrals, and galleries spark the flywheel.',
+    title: 'Get the file',
+    description: 'The product is the full-resolution file.',
   },
 ];
 
@@ -28,8 +28,8 @@ const StepsJourney = () => {
   return (
     <section className="bg-slate-900 py-20">
       <Section id="support" data-founder-anchor="support">
-        <p className="text-sm uppercase tracking-[0.3em] text-brand-indigo">How Wondertone Works</p>
-        <h2 className="text-3xl font-semibold mt-3 mb-10">A journey engineered for instant wow and long-term love</h2>
+        <p className="text-sm uppercase tracking-[0.3em] text-brand-indigo">How it works</p>
+        <h2 className="text-3xl font-semibold mt-3 mb-10">Upload → Choose a style → See it → Get the file.</h2>
         <div className="grid md:grid-cols-4 gap-6">
           {steps.map((item) => (
             <Card key={item.step} glass>

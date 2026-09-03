@@ -32,6 +32,7 @@ describe('memorial, legal shells, and SPA routing', () => {
     const privacy = readRepoFile('src/pages/PrivacyPage.tsx');
     const terms = readRepoFile('src/pages/TermsPage.tsx');
     const shell = readRepoFile('src/pages/LegalPlaceholderPage.tsx');
+    expect(shell).toMatch(/Unsigned draft/i);
     expect(shell).toMatch(/not in force/i);
     expect(shell).toMatch(/not legal advice/i);
     expect(privacy).toMatch(/Route shell only/i);
@@ -50,6 +51,7 @@ describe('memorial, legal shells, and SPA routing', () => {
     const nav = readRepoFile('src/components/navigation/FounderNavigation.tsx');
     expect(gift).toMatch(/not an offer/i);
     expect(nav).not.toContain("to: '/gift'");
+    expect(nav).not.toContain("to: '/pricing'");
   });
 
   it('uses memorial copy without prices, ratings, or Living Canvas', () => {

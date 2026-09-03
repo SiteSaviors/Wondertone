@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import FounderNavigation from '@/components/navigation/FounderNavigation';
 
 const GiftPage = () => (
@@ -8,6 +9,15 @@ const GiftPage = () => (
       <p className="text-white/70">
         This route is unlisted. Nothing here is for sale. It is not an offer and is not linked from
         navigation.
+      </p>
+      <p className="text-xs text-white/40">
+        <Link to="/privacy" className="underline underline-offset-4">
+          Privacy
+        </Link>
+        {' · '}
+        <Link to="/terms" className="underline underline-offset-4">
+          Terms
+        </Link>
       </p>
     </main>
   </div>

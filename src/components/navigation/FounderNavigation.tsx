@@ -2,12 +2,10 @@ import { Suspense, lazy, useEffect, useMemo, useRef, useState, useCallback } fro
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { useAuthModal, type AuthModalMode } from '@/store/useAuthModal';
-import { useCanvasConfigState } from '@/store/hooks/useFounderCanvasStore';
 import { useEntitlementsActions, useEntitlementsState } from '@/store/hooks/useEntitlementsStore';
 import { useSessionActions, useSessionState } from '@/store/hooks/useSessionStore';
 import TokenBalanceDrawer from '@/components/navigation/TokenBalanceDrawer';
 import MembershipConfirmationModal from '@/components/navigation/MembershipConfirmationModal';
-import OrdersPopover from '@/components/navigation/OrdersPopover';
 import { trackTokenDrawerOpened } from '@/utils/telemetry';
 import { createBillingPortalSession } from '@/utils/billingPortal';
 import { useProductSurface } from '@/providers/ProductSurfaceProvider';
@@ -17,16 +15,12 @@ const AccountDropdown = lazy(() => import('@/components/navigation/AccountDropdo
 const NAV_LINKS = [
   { id: 'studio', label: 'STUDIO', to: '/create#studio', type: 'anchor' as const },
   { id: 'styles', label: 'STYLES', to: '/#styles', type: 'anchor' as const },
-  { id: 'pricing', label: 'PRICING', to: '/pricing', type: 'route' as const },
   { id: 'support', label: 'SUPPORT', to: '/#support', type: 'anchor' as const },
 ];
 
 const FounderNavigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { enhancements } = useCanvasConfigState((state) => ({
-    enhancements: state.enhancements,
-  }));
   const { entitlements } = useEntitlementsState();
   const { hydrateEntitlements } = useEntitlementsActions();
   const { sessionUser, sessionHydrated, accessToken } = useSessionState();
@@ -35,11 +29,9 @@ const FounderNavigation = () => {
   const openNavAuthModal = (mode?: AuthModalMode) => openAuthModal(mode, { source: 'nav' });
   const { rules, surface } = useProductSurface();
   const navLinks = NAV_LINKS.filter((link) => {
-    if (rules.hideSubscriptionTiers && link.id === 'pricing') return false;
     if (surface === 'memorial' && (link.id === 'studio' || link.id === 'styles')) return false;
     return true;
   });
-  const cartItemCount = enhancements.filter((enhancement) => enhancement.enabled).length;
   const [isAtTop, setIsAtTop] = useState(true);
   const [heroVisible, setHeroVisible] = useState(true);
   const scrollTickingRef = useRef(false);
@@ -334,14 +326,6 @@ const FounderNavigation = () => {
             </button>
             )}
 
-            {!rules.hideCanvasRail && (
-              <OrdersPopover
-                cartCount={cartItemCount}
-                onNavigateToCheckout={() => {
-                  navigate('/create#canvas-checkout');
-                }}
-              />
-            )}
 
             <Suspense fallback={accountFallback}>
               <AccountDropdown

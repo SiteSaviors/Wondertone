@@ -13,34 +13,29 @@ const fakeWindow = {
 vi.stubGlobal('window', fakeWindow);
 
 describe('ActionGrid', () => {
-  it('invokes onCreateCanvas when Create Canvas button is clicked', () => {
+  it('uses revealed_artwork_full_res as the only post-reveal CTA', () => {
     const onDownload = vi.fn();
     const onCreateCanvas = vi.fn();
-    const onChangeOrientation = vi.fn();
-    const onSaveToGallery = vi.fn();
 
     const renderer = TestRenderer.create(
       <ActionGrid
         onDownload={onDownload}
         onCreateCanvas={onCreateCanvas}
-        onChangeOrientation={onChangeOrientation}
-        onSaveToGallery={onSaveToGallery}
         downloading={false}
         downloadDisabled={false}
         createCanvasDisabled={false}
-        orientationDisabled={false}
-        savingToGallery={false}
-        savedToGallery={false}
         isPremiumUser
       />
     );
 
     const buttons = renderer.root.findAllByType('button');
-    const createCanvasButton = buttons[1];
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0].props['data-sku']).toBe('revealed_artwork_full_res');
 
-    createCanvasButton.props.onClick();
+    buttons[0].props.onClick();
 
-    expect(onCreateCanvas).toHaveBeenCalledTimes(1);
-    expect(onDownload).not.toHaveBeenCalled();
+    expect(onDownload).toHaveBeenCalledTimes(1);
+    expect(onCreateCanvas).not.toHaveBeenCalled();
+    expect(JSON.stringify(renderer.toJSON())).not.toContain('Create Canvas Art');
   });
 });

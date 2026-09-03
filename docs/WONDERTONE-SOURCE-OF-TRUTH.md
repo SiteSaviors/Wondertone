@@ -17,6 +17,17 @@ Describes **current `main` plus this isolated trust-checkpoint PR**. Anything no
 - Creator / Plus / Pro and token packs are not sold on the Beacon artwork path.
 - Homepage, pricing, and related marketing no longer claim unverified counts, ratings, press logos, ship-in-days promises, or “stays private always.” Do not invent replacement social proof.
 
+## Canonical first path
+
+- `/` is the honest creator home. It is not the memorial page.
+- `/memorial` remains the dedicated memorial entrance.
+- `/create` is the shared studio.
+- `/privacy` and `/terms` are unsigned drafts, not in force. Footer links to both.
+- `/gift` is unlisted.
+- `/pricing` exists but is not a primary nav or first-path entrance.
+- Homepage style cards navigate to `/create?preselected_style=<id>`.
+- After reveal, the primary CTA is `revealed_artwork_full_res` only. Living Canvas toggle is hidden. “ORDERS API COMING SOON” is hidden.
+
 ## Memorial (first live entrance)
 
 - Dedicated route in `src/main.tsx` (`/memorial/*`). Not the marketing `*` landing wildcard.
