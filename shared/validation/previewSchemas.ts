@@ -5,6 +5,14 @@ import type {
   PreviewStatusResponse,
 } from './previewSchemaDefinitions';
 
+export {
+  previewRequestSchema,
+  previewCompleteSchema,
+  previewProcessingSchema,
+  previewStatusSchema,
+  qualityEnum,
+} from './previewSchemaDefinitions';
+
 const QUALITY_VALUES = new Set<PreviewRequest['quality']>(['low', 'medium', 'high', 'auto']);
 const ASPECT_RATIO_REGEX = /^\d+:\d+$/;
 

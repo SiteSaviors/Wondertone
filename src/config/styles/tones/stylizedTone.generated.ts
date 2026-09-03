@@ -194,10 +194,10 @@ export const TONE_STYLES: StyleRegistryEntry[] = [
   sortOrder: 90,
   assets: {
     thumbnail: "/art-style-thumbnails/clay.jpg",
-    thumbnailWebp: "/art-style-thumbnails/clay.webp",
+    thumbnailWebp: null,
     thumbnailAvif: "/art-style-thumbnails/clay.avif",
     preview: "/art-style-thumbnails/clay.jpg",
-    previewWebp: "/art-style-thumbnails/clay.webp",
+    previewWebp: null,
     previewAvif: "/art-style-thumbnails/clay.avif",
   },
   featureFlags: {

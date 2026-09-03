@@ -263,7 +263,7 @@ export const STYLE_CORE_METADATA: StyleCoreMetadata[] = [
     "name": "Claymation Sculpt",
     "description": "Stop-motion clay portraiture with hand-molded texture and studio lighting.",
     "thumbnail": "/art-style-thumbnails/clay.jpg",
-    "thumbnailWebp": "/art-style-thumbnails/clay.webp",
+    "thumbnailWebp": null,
     "thumbnailAvif": "/art-style-thumbnails/clay.avif",
     "tone": "stylized",
     "tier": "premium",

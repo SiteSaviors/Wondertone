@@ -12,5 +12,9 @@ export const expandPaletteSwatches = (
     return swatches.slice(0, targetCount);
   }
 
-  return swatches.slice();
+  const padded = swatches.slice();
+  while (padded.length < targetCount) {
+    padded.push(swatches[padded.length % swatches.length]);
+  }
+  return padded;
 };

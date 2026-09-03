@@ -54,6 +54,7 @@ describe('Prism funnel analytics contract v1', () => {
     expect(record?.release_id).toBe('abc123def:build-9');
     expect(record?.properties).toEqual({
       source: 'photo',
+      surface: 'studio',
     });
     expect(JSON.stringify(record)).not.toMatch(/customer@example.com|signed_url|data:image/);
   });
@@ -75,6 +76,7 @@ describe('Prism funnel analytics contract v1', () => {
     ).toEqual({
       style_id: 'classic-oil',
       reason: 'generation_failed',
+      surface: 'studio',
     });
   });
 
