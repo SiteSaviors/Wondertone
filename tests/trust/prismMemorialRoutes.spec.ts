@@ -16,17 +16,33 @@ describe('memorial, legal shells, and SPA routing', () => {
     expect(marketing).toContain('LandingPage');
   });
 
-  it('keeps privacy and terms as placeholder shells with no legal force', () => {
+  it('registers dedicated gift, privacy, and terms routes instead of the landing wildcard', () => {
+    const marketing = readRepoFile('src/routes/MarketingRoutes.tsx');
+    expect(marketing).toContain("path: '/privacy'");
+    expect(marketing).toContain('PrivacyPage');
+    expect(marketing).toContain("path: '/terms'");
+    expect(marketing).toContain('TermsPage');
+    expect(marketing).toContain("path: '/gift'");
+    expect(marketing).toContain('GiftPage');
+    expect(marketing).toContain("path: '*'");
+    expect(marketing).toContain('LandingPage');
+  });
+
+  it('keeps privacy and terms as route shells with no fabricated legal copy', () => {
     const privacy = readRepoFile('src/pages/PrivacyPage.tsx');
     const terms = readRepoFile('src/pages/TermsPage.tsx');
     const shell = readRepoFile('src/pages/LegalPlaceholderPage.tsx');
     expect(shell).toMatch(/not in force/i);
     expect(shell).toMatch(/not legal advice/i);
-    expect(privacy).toContain('do not sell photographs');
+    expect(privacy).toMatch(/Route shell only/i);
+    expect(privacy).toMatch(/not a privacy policy/i);
     expect(privacy).not.toMatch(/stays private always/i);
     expect(privacy).not.toMatch(/@wondertone\./i);
-    expect(terms).toContain('revealed artwork');
-    expect(terms).toContain('Checkout is not delivery');
+    expect(privacy).not.toMatch(/we collect/i);
+    expect(terms).toMatch(/Route shell only/i);
+    expect(terms).toMatch(/not a terms of service/i);
+    expect(terms).not.toMatch(/by using this/i);
+    expect(terms).not.toMatch(/you agree/i);
   });
 
   it('keeps /gift unlisted and not sold', () => {
@@ -46,14 +62,18 @@ describe('memorial, legal shells, and SPA routing', () => {
     expect(memorial).not.toMatch(/★|stars|press/i);
   });
 
-  it('rewrites unknown paths to the SPA on Vercel', () => {
+  it('rewrites the locked client paths to the SPA on Vercel', () => {
     const vercel = readRepoFile('vercel.json');
     expect(vercel).toContain('destination');
     expect(vercel).toContain('/index.html');
-    expect(vercel).toContain('/memorial');
+    expect(vercel).toContain('"/"');
     expect(vercel).toContain('/create');
+    expect(vercel).toContain('/pricing');
+    expect(vercel).toContain('/memorial');
+    expect(vercel).toContain('/gift');
     expect(vercel).toContain('/privacy');
     expect(vercel).toContain('/terms');
     expect(vercel).toMatch(/\(\?\!api\//);
+    expect(vercel).toContain('assets/');
   });
 });

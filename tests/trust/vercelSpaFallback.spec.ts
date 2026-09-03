@@ -11,7 +11,18 @@ type VercelConfig = {
   rewrites?: VercelRewrite[];
 };
 
+const REQUIRED_EXPLICIT_SOURCES = [
+  '/',
+  '/create',
+  '/pricing',
+  '/memorial',
+  '/gift',
+  '/privacy',
+  '/terms',
+];
+
 const RELEASE_GATE_PATHS = [
+  '/',
   '/create',
   '/create/studio',
   '/pricing',
@@ -43,15 +54,20 @@ describe('Vercel SPA fallback (release gate)', () => {
     expect(config.rewrites?.every((rule) => rule.destination === '/index.html')).toBe(true);
   });
 
-  it('covers the live 404 client routes without swallowing API or assets', () => {
+  it('lists the locked client routes explicitly and keeps a general SPA fallback', () => {
     const rewrites = readVercelConfig().rewrites ?? [];
-    const catchAll = rewrites.find((rule) => rule.source.includes('(?!'));
+    const sources = rewrites.map((rule) => rule.source);
+    for (const source of REQUIRED_EXPLICIT_SOURCES) {
+      expect(sources, `${source} must have an explicit rewrite`).toContain(source);
+    }
 
-    expect(catchAll, 'catch-all rewrite with a negative lookahead is required').toBeDefined();
+    const catchAll = rewrites.find((rule) => rule.source.includes('(?!'));
+    expect(catchAll, 'general SPA fallback with a negative lookahead is required').toBeDefined();
     expect(catchAll?.destination).toBe('/index.html');
     for (const prefix of EXCLUDED_PREFIXES) {
       expect(catchAll?.source).toContain(prefix);
     }
+    expect(catchAll?.source).toContain('[A-Za-z0-9]+$');
 
     for (const pathname of RELEASE_GATE_PATHS) {
       const matched = rewrites.some(
@@ -61,20 +77,33 @@ describe('Vercel SPA fallback (release gate)', () => {
       );
       expect(matched, `${pathname} must rewrite to index.html`).toBe(true);
     }
+  });
+
+  it('does not swallow API paths or hashed static assets', () => {
+    const rewrites = readVercelConfig().rewrites ?? [];
+    const catchAll = rewrites.find((rule) => rule.source.includes('(?!'));
 
     for (const pathname of [
       '/api/health',
       '/functions/v1/ingest-funnel-event',
-      '/assets/index.js',
+      '/assets/index-abc123def.js',
+      '/assets/index-abc123def.css',
       '/Auth-Logos/Google-logo.svg',
+      '/favicon.ico',
     ]) {
       const matchedExplicit = rewrites.some(
         (rule) => rule.destination === '/index.html' && matchesExplicitSource(rule.source, pathname)
       );
       expect(matchedExplicit, `${pathname} must not have an explicit SPA rewrite`).toBe(false);
+
       const rest = pathname.replace(/^\//, '');
-      const excludedByLookahead = EXCLUDED_PREFIXES.some((prefix) => rest.startsWith(prefix));
-      expect(excludedByLookahead, `${pathname} must be excluded by the catch-all lookahead`).toBe(true);
+      const excludedByPrefix = EXCLUDED_PREFIXES.some((prefix) => rest.startsWith(prefix));
+      const excludedByExtension = /\.[A-Za-z0-9]+$/.test(rest);
+      expect(
+        excludedByPrefix || excludedByExtension,
+        `${pathname} must be excluded by the catch-all lookahead`
+      ).toBe(true);
+      expect(catchAll?.source.includes('assets/') || excludedByExtension).toBe(true);
     }
   });
 });
