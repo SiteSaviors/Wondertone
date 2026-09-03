@@ -31,7 +31,7 @@ const StudioEmptyState = ({ onUpload, onBrowseStyles, launchflowOpen }: StudioEm
           <p className="font-poppins text-sm text-white/75 sm:text-base">
             {surface === 'memorial'
               ? 'Upload a photo. Choose a style. See them again. No prompts.'
-              : 'Choose between 50+ art styles to start your creation.'}
+              : 'Upload a picture. Pick a look. No prompts.'}
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">

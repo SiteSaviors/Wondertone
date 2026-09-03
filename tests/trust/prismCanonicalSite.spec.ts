@@ -70,5 +70,12 @@ describe('Prism canonical site completeness', () => {
     expect(orders).not.toMatch(/Orders API coming soon/i);
     expect(breadth).not.toContain('/pricing');
     expect(breadth).not.toContain('Upgrade to Creator');
+    expect(breadth).not.toContain('print on museum-quality canvas');
+    expect(breadth).not.toContain('Prints ship ready to hang');
+    expect(breadth).not.toContain('50+');
+    const createHero = readRepoFile('src/sections/ProductHeroSection.tsx');
+    expect(createHero).toContain('Your photo. A style.');
+    expect(createHero).not.toContain('40+');
+    expect(createHero).not.toContain('in seconds');
   });
 });

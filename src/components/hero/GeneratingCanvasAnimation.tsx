@@ -175,7 +175,7 @@ const GeneratingCanvasAnimation = ({
               data-reduced-motion={reducedAttr}
             >
               <p className="text-lg font-semibold text-white mb-1">
-                {phase === 'loading' ? 'Initializing AI...' : 'Generating your canvas...'}
+                {phase === 'loading' ? 'Starting…' : 'Generating your look…'}
               </p>
               <p className="text-sm text-white/60">Just a moment</p>
             </div>

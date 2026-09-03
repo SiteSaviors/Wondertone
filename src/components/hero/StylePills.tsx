@@ -111,7 +111,7 @@ const StylePills = ({ pills, onStyleChange, className = '' }: StylePillsProps) =
         </div>
         <div className="text-center px-4">
           <span className="text-lg font-bold bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text text-transparent drop-shadow-[0_0_12px_rgba(168,85,247,0.4)]">
-            Explore 40+ unique art styles →
+            Explore styles →
           </span>
         </div>
       </div>
@@ -125,7 +125,7 @@ const StylePills = ({ pills, onStyleChange, className = '' }: StylePillsProps) =
           {pills.slice(4, 6).map((pill) => renderPill(pill, 'lg'))}
           <div className="col-span-2 flex items-center justify-center">
             <span className="text-xl font-bold bg-gradient-to-r from-purple-300 via-pink-300 to-blue-300 bg-clip-text text-transparent drop-shadow-[0_0_16px_rgba(168,85,247,0.5)]">
-              Explore 40+ unique art styles →
+              Explore styles →
             </span>
           </div>
         </div>

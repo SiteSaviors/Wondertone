@@ -306,10 +306,10 @@ const InstantBreadthStrip = () => {
             aria-hidden="true"
           />
           <h2 className="font-poppins text-[28px] font-bold tracking-tight text-white sm:text-3xl md:text-[48px]">
-            One click. 50+ art styles. Museum-quality results.
+            One photo. Many styles. See the look first.
           </h2>
           <p className="font-poppins max-w-4xl text-base text-white/80 sm:text-lg">
-            Save to your gallery, download &amp; share, or print on museum-quality canvas.
+            Upload a picture. Pick a look. Preview is display-only.
           </p>
           <p className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-white/60 sm:text-base">
             <span className="inline-flex items-center gap-2">
@@ -322,7 +322,7 @@ const InstantBreadthStrip = () => {
             </span>
             <span className="inline-flex items-center gap-2">
               <span aria-hidden="true">✓</span>
-              Prints ship ready to hang
+              No prompts
             </span>
           </p>
         </header>

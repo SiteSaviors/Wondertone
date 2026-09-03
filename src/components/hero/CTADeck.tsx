@@ -11,7 +11,7 @@ type CTADeckProps = {
 const defaultFrictionReducers = [
   'Free preview',
   'No credit card',
-  'Ready in 60 seconds',
+  'No prompts',
 ];
 
 const CTADeck = ({
