@@ -50,5 +50,10 @@ describe('memorial, legal shells, and SPA routing', () => {
     const vercel = readRepoFile('vercel.json');
     expect(vercel).toContain('destination');
     expect(vercel).toContain('/index.html');
+    expect(vercel).toContain('/memorial');
+    expect(vercel).toContain('/create');
+    expect(vercel).toContain('/privacy');
+    expect(vercel).toContain('/terms');
+    expect(vercel).toMatch(/\(\?\!api\//);
   });
 });

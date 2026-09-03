@@ -57,6 +57,12 @@ No photographs, prompts, signed URLs, emails, credentials, raw provider payloads
 - `/privacy` and `/terms` are route-shell **placeholders**. Luke has not approved legal copy. They are not in force and are not legal advice.
 - `/gift` may exist. It is unlisted, not linked, and not sold.
 
+## SPA fallback (release gate)
+
+- **Verified live on forever-in-color.vercel.app:** `GET /` is 200. `GET /create`, `/pricing`, `/gift`, `/memorial`, `/privacy`, `/terms` return Vercel 404 (`x-vercel-error: NOT_FOUND`). Production currently has no `vercel.json`.
+- **This PR:** adds `vercel.json` SPA rewrites so those client routes serve `index.html` on hard refresh, ads, and shared URLs. `/api/`, `/functions/`, `/assets/`, and `/Auth-Logos/` are excluded from the fallback.
+- This file is git-only until a founder-approved production deploy. This PR does not deploy. Memorial must not be treated as a live entrance URL until this rewrite is on the production host.
+
 ## Unverified vs deployed
 
 - **UNVERIFIED:** whether production already ran the original dual-bucket SQL, `CREATE_BUCKETS.sql`, or these repairs.
