@@ -5,7 +5,6 @@ import { trackLaunchflowOpened } from '@/utils/launchflowTelemetry';
 import GeneratingCanvasAnimation from '@/components/hero/GeneratingCanvasAnimation';
 import StylePills from '@/components/hero/StylePills';
 import CTADeck from '@/components/hero/CTADeck';
-import AnimatedTransformBadge from '@/components/hero/AnimatedTransformBadge';
 import usePrefersReducedMotion from '@/hooks/usePrefersReducedMotion';
 import './ProductHeroSection.css';
 
@@ -151,11 +150,7 @@ const ProductHeroSection = () => {
       <Section className="relative pt-32 pb-20">
         <div className="mx-auto max-w-6xl space-y-6">
 
-          {/* Animated Transform Badge + Headline */}
           <div className="text-center text-white max-w-5xl mx-auto px-4">
-            <div className="flex justify-center mb-6 md:mb-8">
-              <AnimatedTransformBadge />
-            </div>
             <div className="space-y-4">
               <h1 className="font-poppins text-4xl sm:text-5xl md:text-7xl font-bold leading-[1.15] tracking-[-0.04em] drop-shadow-2xl">
                 Your photo. A style.{' '}
@@ -170,10 +165,7 @@ const ProductHeroSection = () => {
           </div>
 
           {/* CTA Deck */}
-          <CTADeck
-            onUploadClick={handleHeroUploadClick}
-            showDemo={false}
-          />
+          <CTADeck onUploadClick={handleHeroUploadClick} />
 
           {/* Hero Canvas Panel with Generation Animation */}
           <div className="max-w-4xl mx-auto">

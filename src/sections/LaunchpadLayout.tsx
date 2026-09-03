@@ -475,11 +475,7 @@ const LaunchflowAccordion = () => {
             )}
           >
             <PhotoUploader />
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-              <div className="text-xs text-white/50">
-                Have questions about image prep?{' '}
-                <span className="text-white/80">Our studio assistants respond in under two minutes.</span>
-              </div>
+            <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={handleClose}

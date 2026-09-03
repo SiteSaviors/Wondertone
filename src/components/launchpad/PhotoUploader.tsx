@@ -414,13 +414,13 @@ const PhotoUploader = () => {
                       ? 'Drop the photo'
                       : 'Upload a photo of someone you lost'
                     : isDragging
-                      ? 'Drop to Transform'
-                      : 'Start Your Masterpiece'}
+                      ? 'Drop the photo'
+                      : 'Upload a picture'}
                 </h3>
                 <p className="font-poppins text-base text-white/80 max-w-auto mx-auto">
                   {surface === 'memorial'
                     ? 'Upload a photo. Choose a style. See them again. No prompts.'
-                    : 'Upload your favorite photo and watch it transform into stunning art in seconds'}
+                    : 'Upload a picture. Pick a look. No prompts.'}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
@@ -440,7 +440,7 @@ const PhotoUploader = () => {
                 )}
               </div>
               <p className="text-xs text-center text-white/50">
-                JPG or PNG • Max 10MB • Instant previews
+                JPG or PNG • Max 10MB
               </p>
             </>
           ) : (

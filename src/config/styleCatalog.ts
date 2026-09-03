@@ -105,7 +105,7 @@ export const STYLE_TONE_DEFINITIONS: Record<StyleTone, StyleToneDefinition> = {
   trending: {
     id: 'trending',
     label: 'Trending Styles',
-    description: 'Most-loved styles from our Community.',
+    description: 'A starting set of styles.',
     icon: '📈',
     sortOrder: 10,
   },

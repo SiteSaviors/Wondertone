@@ -1,10 +1,8 @@
-import { Check, Play } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 type CTADeckProps = {
   onUploadClick: () => void;
-  onDemoClick?: () => void;
   frictionReducers?: string[];
-  showDemo?: boolean;
   className?: string;
 };
 
@@ -16,9 +14,7 @@ const defaultFrictionReducers = [
 
 const CTADeck = ({
   onUploadClick,
-  onDemoClick,
   frictionReducers = defaultFrictionReducers,
-  showDemo = false,
   className = '',
 }: CTADeckProps) => {
   return (
@@ -33,20 +29,8 @@ const CTADeck = ({
             background: 'linear-gradient(135deg, rgb(192 132 252) 0%, rgb(59 130 246) 100%)'
           }}
         >
-          Create Your Masterpiece →
+          Start creating
         </button>
-
-        {/* Optional Demo CTA */}
-        {showDemo && onDemoClick && (
-          <button
-            type="button"
-            onClick={onDemoClick}
-            className="flex items-center gap-2 px-6 py-3 rounded-full border border-white/30 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/50 transition-all"
-          >
-            <Play className="w-4 h-4" />
-            <span className="text-sm font-medium">Watch 60s demo</span>
-          </button>
-        )}
       </div>
 
       {/* Friction Reducers - Horizontal on all screen sizes */}

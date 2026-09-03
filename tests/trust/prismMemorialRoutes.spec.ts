@@ -65,6 +65,11 @@ describe('memorial, legal shells, and SPA routing', () => {
     expect(memorial).not.toMatch(/\$\d/);
     expect(memorial).not.toMatch(/Living Canvas/);
     expect(memorial).not.toMatch(/★|stars|press/i);
+    expect(memorial).not.toContain('InstantBreadthStrip');
+    expect(memorial).not.toContain('Browse Our Library');
+    expect(readRepoFile('src/config/productSurface.ts')).toMatch(/hideStockLibrary:\s*true/);
+    expect(uploader).toContain('hideStockLibrary');
+    expect(uploader.indexOf('!rules.hideStockLibrary')).toBeLessThan(uploader.indexOf('Browse Our Library'));
   });
 
   it('rewrites the locked client paths to the SPA on Vercel', () => {

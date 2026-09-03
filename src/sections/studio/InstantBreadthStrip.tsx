@@ -13,6 +13,7 @@ import { useStyleCatalogState } from '@/store/hooks/useStyleCatalogStore';
 import type { StyleOption } from '@/store/founder/storeTypes';
 import usePrefersReducedMotion from '@/hooks/usePrefersReducedMotion';
 import { useFounderStore } from '@/store/useFounderStore';
+import { useProductSurface } from '@/providers/ProductSurfaceProvider';
 
 const INSTANT_BREADTH_STYLE_IDS = [
   'classic-oil-painting',
@@ -70,6 +71,7 @@ const normalizeOffset = (value: number, segment: number) => {
 const InstantBreadthStrip = () => {
   const { styles } = useStyleCatalogState();
   const openStockLibrary = useFounderStore((state) => state.openStockLibrary);
+  const { rules } = useProductSurface();
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const curatedItems = useMemo(() => selectInstantBreadthItems(styles), [styles]);
@@ -336,6 +338,7 @@ const InstantBreadthStrip = () => {
             className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_bottom,rgba(168,85,247,0.18),transparent_65%)] blur-[120px] opacity-60 animate-pulse"
             aria-hidden="true"
           />
+          {!rules.hideStockLibrary && (
           <button
             type="button"
             onClick={handleOpenSample}
@@ -346,6 +349,7 @@ const InstantBreadthStrip = () => {
           >
             Browse Our Library →
           </button>
+          )}
         </div>
 
         <div className="relative">

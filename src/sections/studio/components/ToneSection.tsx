@@ -162,11 +162,6 @@ export default function ToneSection({
             >
               <ChevronDown className="h-5 w-5" />
             </motion.span>
-            {tone === 'trending' && (
-              <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.28em] text-rose-200 shadow-[0_6px_18px_rgba(244,114,182,0.35)]">
-                Hot
-              </span>
-            )}
           </div>
         </div>
       </button>

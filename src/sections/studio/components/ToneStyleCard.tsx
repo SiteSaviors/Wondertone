@@ -4,6 +4,7 @@ import { Lock, Star, Sparkles, TrendingUp } from 'lucide-react';
 import { clsx } from 'clsx';
 import type { ToneSectionStyle } from '@/store/hooks/useToneSections';
 import { TONE_GRADIENTS } from '@/config/toneGradients';
+import { useProductSurface } from '@/providers/ProductSurfaceProvider';
 import { toneCardSpring } from '../motion/toneAccordionMotion';
 import './ToneStyleCard.css';
 
@@ -29,6 +30,7 @@ export default function ToneStyleCard({
   isLockedActive = false,
 }: ToneStyleCardProps) {
   const { option, gate, isSelected, isFavorite, metadataTone, readiness } = styleEntry;
+  const { rules } = useProductSurface();
   const isStyleLocked = !gate.allowed;
   const [isAnimating, setIsAnimating] = useState(false);
   const isHero = layout === 'hero';
@@ -463,7 +465,7 @@ export default function ToneStyleCard({
           {isHero ? heroDescription : option.description}
         </p>
         {/* Lock Message */}
-        {isStyleLocked && gate.requiredTier && (
+        {isStyleLocked && gate.requiredTier && !rules.hideSubscriptionTiers && (
           <span
             className={clsx(
               'inline-flex items-center gap-2 text-[10px] font-semibold text-purple-200/90',

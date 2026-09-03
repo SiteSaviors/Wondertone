@@ -128,5 +128,41 @@ describe('Prism canonical site completeness', () => {
     expect(createHero).toContain('Your photo. A style.');
     expect(createHero).not.toContain('40+');
     expect(createHero).not.toContain('in seconds');
+    expect(createHero).not.toContain('AnimatedTransformBadge');
+    expect(createHero).not.toContain('Create Your Masterpiece');
+  });
+
+  it('removes empty-studio stats, masterpiece CTAs, and style-rail sales copy', () => {
+    const cta = readRepoFile('src/components/hero/CTADeck.tsx');
+    const animation = readRepoFile('src/components/hero/GeneratingCanvasAnimation.tsx');
+    const uploader = readRepoFile('src/components/launchpad/PhotoUploader.tsx');
+    const launchpad = readRepoFile('src/sections/LaunchpadLayout.tsx');
+    const tones = readRepoFile('src/config/styleCatalog.ts');
+    const toneSection = readRepoFile('src/sections/studio/components/ToneSection.tsx');
+    const styleCard = readRepoFile('src/sections/studio/components/ToneStyleCard.tsx');
+    const empty = readRepoFile('src/sections/studio/components/StudioEmptyState.tsx');
+    const preview = readRepoFile('src/sections/studio/components/CanvasPreviewPanel.tsx');
+
+    expect(cta).toContain('Start creating');
+    expect(cta).not.toContain('Create Your Masterpiece');
+    expect(cta).not.toContain('Watch 60s demo');
+    expect(animation).not.toContain('2.3s');
+    expect(animation).not.toContain('Ready in');
+    expect(uploader).not.toContain('Start Your Masterpiece');
+    expect(uploader).not.toContain('in seconds');
+    expect(uploader).not.toContain('Instant previews');
+    expect(launchpad).not.toContain('studio assistants');
+    expect(launchpad).not.toContain('two minutes');
+    expect(tones).not.toContain('Most-loved styles from our Community');
+    expect(toneSection).not.toMatch(/>Hot</);
+    expect(styleCard).toContain('hideSubscriptionTiers');
+    expect(styleCard.indexOf('!rules.hideSubscriptionTiers')).toBeLessThan(
+      styleCard.indexOf('Unlock with {gate.requiredTier.toUpperCase()} plan')
+    );
+    expect(empty).toContain('hideStockLibrary');
+    expect(preview).toContain("previewStateStatus === 'ready' && currentStyle");
+    expect(preview.indexOf("previewStateStatus === 'ready' && currentStyle")).toBeLessThan(
+      preview.indexOf('<ActionGrid')
+    );
   });
 });

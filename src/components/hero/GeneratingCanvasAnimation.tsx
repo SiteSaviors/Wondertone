@@ -242,13 +242,9 @@ const GeneratingCanvasAnimation = ({
                       <span className="hidden md:inline text-purple-300">🖱️ Hover to compare</span>
                       <span className="md:hidden text-purple-300">👆 Hold to compare</span>
                     </>
-                  ) : (
-                    <span className="text-emerald-400">Ready in 2.3s ⚡</span>
-                  )}
+                  ) : null}
                 </div>
-              ) : (
-                <div className="text-xs text-emerald-400 font-medium">Ready in 2.3s ⚡</div>
-              )}
+              ) : null}
             </>
           )}
         </div>
