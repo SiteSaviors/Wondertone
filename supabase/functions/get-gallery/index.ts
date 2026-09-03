@@ -69,7 +69,7 @@ const resolveOwnedObjectUrl = async (
   supabase: ReturnType<typeof createClient>,
   storageRef: StorageObjectRef,
   requesterId: string,
-  ownerId: string,
+  ownerId: string | null,
   entitledToClean: boolean
 ): Promise<string | null> => {
   const decision = decideCleanArtAccess({
@@ -96,7 +96,7 @@ export const buildDisplayUrl = async (
   storageRef: StorageObjectRef,
   context: 'preview' | 'download',
   requiresWatermark: boolean,
-  access: { requesterId: string; ownerId: string }
+  access: { requesterId: string; ownerId: string | null }
 ): Promise<string | null> => {
   if (!requiresWatermark) {
     return resolveOwnedObjectUrl(supabase, storageRef, access.requesterId, access.ownerId, true);
@@ -440,7 +440,7 @@ serve(async (req: Request) => {
               storageRef,
               'preview',
               requiresWatermark,
-              { requesterId: userId, ownerId: item.userId ?? userId }
+              { requesterId: userId, ownerId: item.userId }
             );
             if (!displayUrl) {
               return null;
@@ -455,7 +455,7 @@ serve(async (req: Request) => {
                 : thumbnailRef
                   ? await resolveAuthorizedObjectUrl(supabase, thumbnailRef, {
                       requesterId: userId,
-                      ownerId: item.userId ?? userId,
+                      ownerId: item.userId,
                       entitledToClean: true,
                     })
                   : null;

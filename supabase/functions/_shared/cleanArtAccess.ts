@@ -7,7 +7,7 @@ export const CLEAN_ART_SIGNED_URL_TTL_SECONDS = 3600;
 export type CleanArtAccessDecision =
   | { allowed: true; mode: 'public' }
   | { allowed: true; mode: 'signed' }
-  | { allowed: false; reason: 'unauthenticated' | 'wrong_owner' | 'not_entitled' };
+  | { allowed: false; reason: 'unauthenticated' | 'wrong_owner' | 'missing_owner' | 'not_entitled' };
 
 export const isPremiumCleanBucket = (bucket: string): boolean => bucket === PREMIUM_CLEAN_BUCKET;
 
@@ -43,8 +43,8 @@ export const decideCleanArtAccess = (input: {
     return { allowed: true, mode: 'public' };
   }
 
-  // Generation / cache-hit for the request that produced the object.
-  // Still never issues a public CDN URL for clean art.
+  // Only the in-flight generate / cache-hit that produced this object
+  // may mint without a separately proven owner. Still never a public URL.
   if (input.pipelineAuthorized) {
     return { allowed: true, mode: 'signed' };
   }
@@ -53,11 +53,15 @@ export const decideCleanArtAccess = (input: {
     return { allowed: false, reason: 'unauthenticated' };
   }
 
-  if (input.ownerId && input.ownerId !== input.requesterId) {
+  if (!input.ownerId) {
+    return { allowed: false, reason: 'missing_owner' };
+  }
+
+  if (input.ownerId !== input.requesterId) {
     return { allowed: false, reason: 'wrong_owner' };
   }
 
-  if (input.entitledToClean === false) {
+  if (input.entitledToClean !== true) {
     return { allowed: false, reason: 'not_entitled' };
   }
 

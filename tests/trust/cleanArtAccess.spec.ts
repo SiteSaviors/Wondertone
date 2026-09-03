@@ -67,7 +67,57 @@ describe('clean art access decisions', () => {
         bucket: USER_UPLOADS_BUCKET,
         requesterId: 'user-b',
         ownerId: 'user-a',
+        entitledToClean: true,
       })
     ).toEqual({ allowed: false, reason: 'wrong_owner' });
+  });
+
+  it('denies clean art when ownerId is missing', () => {
+    expect(
+      decideCleanArtAccess({
+        bucket: PREMIUM_CLEAN_BUCKET,
+        requesterId: 'user-a',
+        ownerId: null,
+        entitledToClean: true,
+      })
+    ).toEqual({ allowed: false, reason: 'missing_owner' });
+
+    expect(
+      decideCleanArtAccess({
+        bucket: USER_UPLOADS_BUCKET,
+        requesterId: 'user-a',
+        entitledToClean: true,
+      })
+    ).toEqual({ allowed: false, reason: 'missing_owner' });
+  });
+
+  it('denies clean art when entitledToClean is missing and not pipelineAuthorized', () => {
+    expect(
+      decideCleanArtAccess({
+        bucket: PREMIUM_CLEAN_BUCKET,
+        requesterId: 'user-a',
+        ownerId: 'user-a',
+      })
+    ).toEqual({ allowed: false, reason: 'not_entitled' });
+  });
+
+  it('denies clean art when entitledToClean is false', () => {
+    expect(
+      decideCleanArtAccess({
+        bucket: PREMIUM_CLEAN_BUCKET,
+        requesterId: 'user-a',
+        ownerId: 'user-a',
+        entitledToClean: false,
+      })
+    ).toEqual({ allowed: false, reason: 'not_entitled' });
+  });
+
+  it('allows pipelineAuthorized generate/cache-hit without a separately proven owner', () => {
+    expect(
+      decideCleanArtAccess({
+        bucket: PREMIUM_CLEAN_BUCKET,
+        pipelineAuthorized: true,
+      })
+    ).toEqual({ allowed: true, mode: 'signed' });
   });
 });
