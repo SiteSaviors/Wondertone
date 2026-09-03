@@ -232,6 +232,34 @@ describe('previewEngine/core', () => {
     expect(state.cacheStylePreview).not.toHaveBeenCalled();
   });
 
+  it('keeps the last successful artwork when generation fails', async () => {
+    const state = createState();
+    state.getCachedStylePreview.mockReturnValue(undefined);
+    state.previews[baseStyle.id] = {
+      status: 'ready',
+      data: {
+        previewUrl: 'https://cdn.example.com/last-art.jpg',
+        watermarkApplied: false,
+        startedAt: 1,
+        completedAt: 2,
+      },
+      orientation: 'square',
+    };
+    mocks.startFounderPreviewGeneration.mockRejectedValueOnce(new Error('provider failed'));
+    const runtime = buildRuntime(state);
+
+    await startStylePreviewFlow(runtime, baseStyle, { force: true });
+
+    expect(state.setPreviewState).toHaveBeenCalledWith(
+      baseStyle.id,
+      expect.objectContaining({
+        status: 'error',
+        data: expect.objectContaining({ previewUrl: 'https://cdn.example.com/last-art.jpg' }),
+      })
+    );
+    expect(state.previews[baseStyle.id]?.data?.previewUrl).toBe('https://cdn.example.com/last-art.jpg');
+  });
+
   it('emits telemetry and caches result on fresh preview generation', async () => {
     const state = createState();
     state.getCachedStylePreview.mockReturnValue(undefined);

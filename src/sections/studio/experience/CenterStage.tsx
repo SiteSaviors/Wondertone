@@ -98,39 +98,41 @@ const CenterStage = ({
   }, [requestUpload]);
 
   return (
-    <CanvasPreviewPanel
-      overlayStyleName={overlayStyleName}
-      overlayStatus={overlayStatus}
-      stylePreviewStatus={stylePreviewStatus}
-      stylePreviewMessage={stylePreviewMessage}
-      stylePreviewError={stylePreviewError}
-      hasCroppedImage={hasCroppedImage}
-      displayPreviewUrl={displayPreviewUrl}
-      previewHasData={previewHasData}
-      previewStateStatus={preview?.status}
-      orientation={orientation}
-      orientationPreviewPending={orientationPreviewPending}
-      orientationChanging={orientationChanging}
-      orientationMismatch={orientationMismatch}
-      previewOrientationLabel={previewOrientationLabel}
-      croppedImage={croppedImage}
-      currentStyle={currentStyle ?? undefined}
-      onSaveToGallery={handleSaveToGallery}
-      savingToGallery={savingToGallery}
-      savedToGallery={savedToGallery}
-      launchpadExpanded={launchpadExpanded}
-      onOpenLaunchflow={handleOpenLaunchflowFromEmptyState}
-      onRequestUpload={handleUploadNewPhotoFromCanvas}
-      onBrowseStyles={handleBrowseStylesFromEmptyState}
-      onDownloadClick={handleDownloadHD}
-      downloadingHD={downloadingHD}
-      isPremiumUser={isPremiumUser}
-      onCreateCanvas={handleCreateCanvasFromCenter}
-      onChangeOrientation={handleChangeOrientationFromCenter}
-      downloadDisabled={downloadDisabled}
-      canvasLocked={canvasLocked}
-      previewLocked={previewLocked}
-    />
+    <div className="min-w-0 w-full" data-studio-center>
+      <CanvasPreviewPanel
+        overlayStyleName={overlayStyleName}
+        overlayStatus={overlayStatus}
+        stylePreviewStatus={stylePreviewStatus}
+        stylePreviewMessage={stylePreviewMessage}
+        stylePreviewError={stylePreviewError}
+        hasCroppedImage={hasCroppedImage}
+        displayPreviewUrl={displayPreviewUrl}
+        previewHasData={previewHasData}
+        previewStateStatus={preview?.status}
+        orientation={orientation}
+        orientationPreviewPending={orientationPreviewPending}
+        orientationChanging={orientationChanging}
+        orientationMismatch={orientationMismatch}
+        previewOrientationLabel={previewOrientationLabel}
+        croppedImage={croppedImage}
+        currentStyle={currentStyle ?? undefined}
+        onSaveToGallery={handleSaveToGallery}
+        savingToGallery={savingToGallery}
+        savedToGallery={savedToGallery}
+        launchpadExpanded={launchpadExpanded}
+        onOpenLaunchflow={handleOpenLaunchflowFromEmptyState}
+        onRequestUpload={handleUploadNewPhotoFromCanvas}
+        onBrowseStyles={handleBrowseStylesFromEmptyState}
+        onDownloadClick={handleDownloadHD}
+        downloadingHD={downloadingHD}
+        isPremiumUser={isPremiumUser}
+        onCreateCanvas={handleCreateCanvasFromCenter}
+        onChangeOrientation={handleChangeOrientationFromCenter}
+        downloadDisabled={downloadDisabled}
+        canvasLocked={canvasLocked}
+        previewLocked={previewLocked}
+      />
+    </div>
   );
 };
 

@@ -166,11 +166,12 @@ export default function MobileStyleDrawer({
   return (
     <>
       {shouldRender && (
-        <div
-          className="mobile-style-drawer"
-          data-open={isOpen ? 'true' : 'false'}
-          data-reduced-motion={prefersReducedMotion ? 'true' : 'false'}
-        >
+          <div
+            className="mobile-style-drawer"
+            data-open={isOpen ? 'true' : 'false'}
+            data-reduced-motion={prefersReducedMotion ? 'true' : 'false'}
+            data-studio-tablet-drawer
+          >
           <div
             className="mobile-style-drawer__scrim"
             onClick={onClose}
@@ -180,7 +181,7 @@ export default function MobileStyleDrawer({
           <div
             className="mobile-style-drawer__panel"
             style={{
-              maxHeight: `min(85vh, ${viewportHeight * 0.85}px)`,
+              ['--drawer-max-height' as string]: `min(85vh, ${viewportHeight * 0.85}px)`,
               paddingBottom: 'env(safe-area-inset-bottom, 0px)',
             }}
             role="dialog"

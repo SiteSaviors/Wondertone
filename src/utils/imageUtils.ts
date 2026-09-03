@@ -1,5 +1,6 @@
 import { getSupabaseClient } from '@/utils/supabaseClient.loader';
 import { ENABLE_HEIC_EDGE_CONVERSION } from '@/config/featureFlags';
+import { downscaleDataUrlForStudio } from '@/utils/studioImageDecode';
 
 export type Orientation = 'horizontal' | 'vertical' | 'square';
 
@@ -58,13 +59,13 @@ export async function readFileAsDataURL(file: File, options: ReadFileAsDataUrlOp
         signal: options.signal,
       });
       options.onConversionSuccess?.({ width: result.width, height: result.height, cacheHit: result.cacheHit });
-      return {
+      return applyStudioDecode({
         dataUrl: result.dataUrl,
         width: result.width,
         height: result.height,
         cacheHit: result.cacheHit,
         source: 'edge',
-      };
+      });
     } catch (error) {
       options.onConversionError?.(error);
       console.warn('[imageUtils] Edge HEIC conversion failed; falling back to local converter', error);
@@ -82,15 +83,28 @@ export async function readFileAsDataURL(file: File, options: ReadFileAsDataUrlOp
       });
       const outputBlob = Array.isArray(converted) ? converted[0] : converted;
       const dataUrl = await blobToDataURL(outputBlob);
-      return { dataUrl, source: 'fallback' };
+      return applyStudioDecode({ dataUrl, source: 'fallback' });
     } catch (error) {
       console.warn('[imageUtils] Local HEIC conversion failed; using original data URL', error);
     }
   }
 
-  return {
+  return applyStudioDecode({
     dataUrl: await blobToDataURL(file),
     source: 'local',
+  });
+}
+
+async function applyStudioDecode(result: FileDataUrlResult): Promise<FileDataUrlResult> {
+  const decoded = await downscaleDataUrlForStudio(result.dataUrl, {
+    width: result.width,
+    height: result.height,
+  });
+  return {
+    ...result,
+    dataUrl: decoded.dataUrl,
+    width: decoded.width || result.width,
+    height: decoded.height || result.height,
   };
 }
 

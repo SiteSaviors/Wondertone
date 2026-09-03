@@ -12,7 +12,10 @@ const LeftRail = () => {
   return (
     <>
       {hasCroppedImage && (
-        <div className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 lg:hidden">
+        <div
+          className="fixed bottom-6 left-1/2 z-[70] flex -translate-x-1/2 md:bottom-auto md:left-4 md:top-24 md:translate-x-0 lg:hidden"
+          data-studio-tablet-styles
+        >
           <button
             type="button"
             onClick={() => setMobileDrawerOpen(true)}

@@ -2,6 +2,7 @@ import { ChangeEvent, DragEvent, Suspense, useCallback, useEffect, useMemo, useR
 import { clsx } from 'clsx';
 import Card from '@/components/ui/Card';
 import { readFileAsDataURL, getImageDimensions, determineOrientationFromDimensions, type FileDataUrlResult } from '@/utils/imageUtils';
+import { downscaleDataUrlForStudio } from '@/utils/studioImageDecode';
 import SmartCropPreview from '@/components/launchpad/SmartCropPreview';
 import AIAnalysisOverlay from '@/components/launchpad/AIAnalysisOverlay';
 import { emitStepOneEvent, trackSourceSelected, trackUploadComplete } from '@/utils/telemetry';
@@ -119,7 +120,13 @@ const PhotoUploader = () => {
   };
 
   const processDataUrl = async (payload: FileDataUrlResult) => {
-    const { dataUrl, width: providedWidth, height: providedHeight } = payload;
+    const decoded = await downscaleDataUrlForStudio(payload.dataUrl, {
+      width: payload.width,
+      height: payload.height,
+    });
+    const dataUrl = decoded.dataUrl;
+    const providedWidth = decoded.width || payload.width;
+    const providedHeight = decoded.height || payload.height;
     setStage('analyzing');
     if (previousOriginalRef.current) {
       clearSmartCropCacheForImage(previousOriginalRef.current);

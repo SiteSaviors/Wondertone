@@ -112,7 +112,7 @@ const StudioExperience = ({ checkoutNotice, onDismissCheckoutNotice }: StudioExp
           </Suspense>
         )}
 
-        <div className="mx-auto block max-w-[1800px] lg:flex">
+        <div className="mx-auto block max-w-[1800px] overflow-x-hidden lg:flex">
           <LeftRail />
 
           <CenterStage

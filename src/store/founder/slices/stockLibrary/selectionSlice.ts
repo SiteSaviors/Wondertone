@@ -1,4 +1,5 @@
 import { fetchImageAsDataUrl } from '@/utils/stockLibrary/assetFetch';
+import { downscaleDataUrlForStudio } from '@/utils/studioImageDecode';
 import { ORIENTATION_PRESETS } from '@/utils/smartCrop';
 import { persistOriginalUpload } from '@/utils/sourceUploadApi';
 import { createPreviewLog } from '@/utils/previewLogApi';
@@ -37,7 +38,14 @@ export const createStockLibrarySelectionSlice: StockLibrarySliceCreator = (set, 
     set({ stockLibraryModalOpen: false });
 
     try {
-      const { dataUrl, width, height } = await fetchImageAsDataUrl(appliedStockImage.fullUrl);
+      const fetched = await fetchImageAsDataUrl(appliedStockImage.fullUrl);
+      const decoded = await downscaleDataUrlForStudio(fetched.dataUrl, {
+        width: fetched.width,
+        height: fetched.height,
+      });
+      const dataUrl = decoded.dataUrl;
+      const width = decoded.width || fetched.width;
+      const height = decoded.height || fetched.height;
 
       get().setOriginalImage(dataUrl);
       get().setOriginalImageDimensions({ width, height });
@@ -93,8 +101,6 @@ export const createStockLibrarySelectionSlice: StockLibrarySliceCreator = (set, 
         console.warn('[stockLibrarySlice] Failed to persist stock image', persistResult.error);
         get().setOriginalImagePreviewLogId(null);
       }
-
-      await get().generatePreviews(undefined, { force: true });
     } catch (error) {
       console.error('[stockLibrarySlice] Unable to apply stock image', error);
       // Re-open the modal if something fails so the user can retry.
