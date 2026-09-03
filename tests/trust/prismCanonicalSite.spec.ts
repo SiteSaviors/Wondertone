@@ -35,6 +35,8 @@ describe('Prism canonical site completeness', () => {
     expect(showcase).toContain('watercolor-dreams');
     expect(showcase).toContain('neon-splash');
     expect(showcase).toContain('classic-oil-painting');
+    expect(showcase).toContain('/art-style-thumbnails/');
+    expect(showcase).not.toContain('images.unsplash.com');
     expect(showcase).not.toContain('<button className="mt-auto');
   });
 
@@ -51,6 +53,8 @@ describe('Prism canonical site completeness', () => {
     const nav = readRepoFile('src/components/navigation/FounderNavigation.tsx');
     expect(footer).toContain('to="/privacy"');
     expect(footer).toContain('to="/terms"');
+    expect(footer).not.toContain('The photo you love, as art.');
+    expect(footer).not.toContain('Your photo. A style. Art you actually want.');
     expect(footer).not.toContain('/pricing');
     expect(gift).toContain('to="/privacy"');
     expect(gift).toContain('to="/terms"');
@@ -126,12 +130,18 @@ describe('Prism canonical site completeness', () => {
     expect(surface).not.toMatch(/hideSubscriptionTiers:\s*false/);
     expect(surface).not.toMatch(/hideSocialProof:\s*false/);
     expect(actionGrid).toContain('revealed_artwork_full_res');
+    expect(actionGrid).toContain('Get the full-resolution artwork');
+    expect(actionGrid).not.toContain('Get the full-resolution file.');
+    expect(actionGrid).not.toMatch(/\$\d/);
     expect(actionGrid).not.toContain('Create Canvas Art');
     const overlays = readRepoFile('src/sections/studio/experience/StudioOverlays.tsx');
     const studioPage = readRepoFile('src/pages/StudioPage.tsx');
     const experience = readRepoFile('src/sections/studio/experience/StudioExperience.tsx');
     expect(experience).toContain('RightRail');
     expect(experience).toContain('!rules.hideCanvasRail');
+    const insights = readRepoFile('src/components/studio/InsightsRail/InsightsRail.tsx');
+    expect(insights).not.toContain('min-h-[420px]');
+    expect(insights).not.toContain('Insights Await');
     expect(overlays).not.toContain('CanvasCheckoutModal');
     expect(overlays).not.toContain('CanvasUpsellToast');
     expect(studioPage).not.toContain('CanvasQualityStrip');

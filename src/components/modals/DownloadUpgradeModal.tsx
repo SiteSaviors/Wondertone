@@ -60,7 +60,7 @@ export default function DownloadUpgradeModal({ isOpen, onClose }: DownloadUpgrad
 
         <div className="p-8">
           <h2 className="text-2xl font-bold text-center text-white mb-3" data-sku="revealed_artwork_full_res">
-            Get the full-resolution file.
+            Get the full-resolution artwork
           </h2>
           <p className="text-center text-white/70 mb-8">
             The product is the full-resolution file of the revealed artwork.

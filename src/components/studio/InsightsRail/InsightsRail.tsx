@@ -67,55 +67,10 @@ const DesktopRailShell = ({ children }: { children: ReactNode }) => (
 );
 
 const PreUploadPlaceholder = () => (
-  <div className="flex justify-center px-2">
-    <div className="relative w-full max-w-[360px]">
-      <div className="rounded-[40px] border-4 border-dashed border-white/35 bg-gradient-to-b from-white/6 via-white/[0.04] to-transparent px-8 py-16 text-center shadow-[0_28px_90px_rgba(8,14,32,0.45)]">
-        <div className="flex min-h-[420px] flex-col items-center justify-center space-y-4">
-          <p className="text-[11px] uppercase tracking-[0.42em] text-white/45">
-            Wondertone Story
-          </p>
-          <h3 className="font-display text-2xl font-semibold tracking-tight text-white">
-            Insights Await
-          </h3>
-          <p className="text-sm leading-relaxed text-white/70">
-            Your Wondertone Story & Insights will appear here after you upload a photo.
-          </p>
-        </div>
-      </div>
-      <div className="pointer-events-none absolute inset-0 rounded-[40px] border border-white/15 blur-sm" />
-    </div>
-  </div>
-);
-
-const PreUploadCuratorTips = ({ upcomingStyleName }: { upcomingStyleName: string | null }) => (
-  <div className="rounded-[32px] border border-white/12 bg-white/[0.05] px-7 py-8 shadow-[0_24px_70px_rgba(8,14,32,0.35)] backdrop-blur">
-    <div className="space-y-5">
-      <div className="flex items-center gap-3 text-left">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white">
-          AI
-        </div>
-        <div>
-          <p className="text-xs uppercase tracking-[0.38em] text-white/45">AI Curator Tips</p>
-          <p className="text-sm font-semibold text-white">Before you upload</p>
-        </div>
-      </div>
-      <ul className="space-y-4 text-left">
-        {[
-          'Choose a clear, well-lit photo—faces and details should be easy to read.',
-          'Natural or soft indoor lighting delivers richer palettes and fewer artifacts.',
-          upcomingStyleName
-            ? `Hovering ${upcomingStyleName}? Upload now to unlock its full Wondertone story.`
-            : 'Pick a style you love—Wondertone will tailor the story once your photo is in.',
-        ].map((tip, index) => (
-          <li key={index} className="flex items-start gap-3 text-white/75">
-            <span className="mt-0.5 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/12 text-xs font-semibold text-white/80">
-              {index + 1}
-            </span>
-            <span className="text-sm leading-relaxed">{tip}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
+  <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-5 text-center">
+    <p className="text-sm leading-relaxed text-white/70">
+      Upload a photo to see this look in the canvas rail.
+    </p>
   </div>
 );
 
@@ -210,12 +165,7 @@ const InsightsRail = ({
             <ShareBadgesLazy previewReady={previewReady} previewUrl={previewUrl} />
           </Suspense>
         ) : (
-          stage === 'pre-upload' && (
-            <>
-              <PreUploadPlaceholder />
-              <PreUploadCuratorTips upcomingStyleName={highlightedStyle?.name ?? null} />
-            </>
-          )
+          stage === 'pre-upload' && <PreUploadPlaceholder />
         )}
       </DesktopRailShell>
       <MobileAccordionShell>
@@ -240,10 +190,7 @@ const InsightsRail = ({
             </Suspense>
           </>
         ) : (
-          <>
-            <PreUploadPlaceholder />
-            <PreUploadCuratorTips upcomingStyleName={highlightedStyle?.name ?? null} />
-          </>
+          <PreUploadPlaceholder />
         )}
       </MobileAccordionShell>
     </>

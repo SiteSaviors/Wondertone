@@ -32,9 +32,9 @@ describe('memorial, legal shells, and SPA routing', () => {
     const privacy = readRepoFile('src/pages/PrivacyPage.tsx');
     const terms = readRepoFile('src/pages/TermsPage.tsx');
     const shell = readRepoFile('src/pages/LegalPlaceholderPage.tsx');
-    expect(shell).toMatch(/Unsigned draft/i);
     expect(shell).toMatch(/not in force/i);
     expect(shell).toMatch(/not legal advice/i);
+    expect(shell).not.toMatch(/parked|tonight|unsigned draft|privacy draft|terms draft/i);
     expect(shell).not.toContain('Privacy draft');
     expect(shell).not.toContain('Terms draft');
     expect(shell).toContain('to="/privacy"');

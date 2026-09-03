@@ -15,7 +15,7 @@ const LegalPlaceholderPage = ({ title, children }: LegalPlaceholderPageProps) =>
         className="rounded-2xl border border-amber-400/40 bg-amber-500/10 px-5 py-4 text-sm text-amber-100"
         role="status"
       >
-        Unsigned draft. Luke has not approved legal copy. This page is not in force and is not legal advice. Do not treat it as a live policy.
+        This page is not in force and is not legal advice. Legal copy has not been supplied. Do not treat it as a live policy.
       </div>
       <h1 className="font-display text-3xl font-semibold tracking-tight">{title}</h1>
       <div className="space-y-5 text-sm leading-7 text-white/75">{children}</div>

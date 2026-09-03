@@ -196,9 +196,7 @@ export default function ToneSection({
               exit={prefersReducedMotion ? undefined : 'initial'}
               transition={prefersReducedMotion ? undefined : toneCardStagger}
             >
-              {styles
-                .filter((styleEntry) => Boolean(styleEntry.option.thumbnail))
-                .map((styleEntry) => (
+              {styles.map((styleEntry) => (
                 <motion.div key={styleEntry.option.id} variants={toneCardVariants}>
                   <ToneStyleCard
                     styleEntry={styleEntry}

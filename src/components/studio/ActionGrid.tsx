@@ -1,7 +1,6 @@
 import { Download } from 'lucide-react';
 import { trackDownloadCTAClick } from '@/utils/telemetry';
 import { useEntitlementsState } from '@/store/hooks/useEntitlementsStore';
-import { useProductSurface } from '@/providers/ProductSurfaceProvider';
 
 type ActionGridProps = {
   onDownload: () => void;
@@ -22,14 +21,13 @@ export function ActionGrid({
   isPremiumUser,
 }: ActionGridProps) {
   const { userTier } = useEntitlementsState();
-  const { surface } = useProductSurface();
 
   const handleDownload = () => {
     trackDownloadCTAClick(userTier, isPremiumUser);
     onDownload();
   };
 
-  const fullResLabel = surface === 'memorial' ? 'Get the full-resolution file.' : 'Get the full-resolution artwork';
+  const fullResLabel = 'Get the full-resolution artwork';
 
   return (
     <div className="w-full">

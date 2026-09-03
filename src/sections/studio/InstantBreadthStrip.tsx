@@ -50,12 +50,13 @@ const selectInstantBreadthItems = (styles: StyleOption[]): InstantBreadthItem[] 
   return INSTANT_BREADTH_STYLE_IDS.map((id) => {
     const entry = styleMap.get(id);
     if (!entry) return null;
+    const thumbnail = entry.thumbnail || `/art-style-thumbnails/${entry.id}.jpg`;
     return {
       id: entry.id,
       name: entry.name,
-      thumbnail: entry.thumbnail,
-      thumbnailWebp: entry.thumbnailWebp ?? null,
-      thumbnailAvif: entry.thumbnailAvif ?? null,
+      thumbnail,
+      thumbnailWebp: entry.thumbnailWebp ?? `/art-style-thumbnails/${entry.id}.webp`,
+      thumbnailAvif: entry.thumbnailAvif ?? `/art-style-thumbnails/${entry.id}.avif`,
     };
   }).filter((item): item is InstantBreadthItem => Boolean(item?.thumbnail));
 };
@@ -389,16 +390,8 @@ const InstantBreadthStrip = () => {
           </p>
         </header>
 
+        {!rules.hideStockLibrary && (
         <div className="relative flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
-          <span
-            className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.22),transparent_70%)] blur-[110px] opacity-80"
-            aria-hidden="true"
-          />
-          <span
-            className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_bottom,rgba(168,85,247,0.18),transparent_65%)] blur-[120px] opacity-60 animate-pulse"
-            aria-hidden="true"
-          />
-          {!rules.hideStockLibrary && (
           <button
             type="button"
             onClick={handleOpenSample}
@@ -409,8 +402,8 @@ const InstantBreadthStrip = () => {
           >
             Browse Our Library →
           </button>
-          )}
         </div>
+        )}
 
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-slate-950/95 via-slate-950/50 to-transparent z-10" />

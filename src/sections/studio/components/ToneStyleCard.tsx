@@ -31,7 +31,8 @@ export default function ToneStyleCard({
 }: ToneStyleCardProps) {
   const { option, gate, isSelected, isFavorite, metadataTone, readiness } = styleEntry;
   const { rules } = useProductSurface();
-  const [thumbnailMissing, setThumbnailMissing] = useState(!option.thumbnail);
+  const resolvedThumbnail = option.thumbnail || `/art-style-thumbnails/${option.id}.jpg`;
+  const [thumbnailMissing, setThumbnailMissing] = useState(!resolvedThumbnail);
   const isStyleLocked = !gate.allowed;
   const [isAnimating, setIsAnimating] = useState(false);
   const isHero = layout === 'hero';
@@ -321,7 +322,7 @@ export default function ToneStyleCard({
             <source srcSet={option.thumbnailWebp} type="image/webp" />
           )}
           <img
-            src={option.thumbnail}
+            src={resolvedThumbnail}
             alt=""
             width={isHero ? 112 : 64}
             height={isHero ? 112 : 64}

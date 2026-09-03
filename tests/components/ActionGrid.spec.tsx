@@ -36,6 +36,9 @@ describe('ActionGrid', () => {
 
     expect(onDownload).toHaveBeenCalledTimes(1);
     expect(onCreateCanvas).not.toHaveBeenCalled();
+    expect(JSON.stringify(renderer.toJSON())).toContain('Get the full-resolution artwork');
+    expect(JSON.stringify(renderer.toJSON())).not.toContain('Get the full-resolution file.');
     expect(JSON.stringify(renderer.toJSON())).not.toContain('Create Canvas Art');
+    expect(JSON.stringify(renderer.toJSON())).not.toMatch(/\$\d/);
   });
 });
