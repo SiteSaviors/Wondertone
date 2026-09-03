@@ -52,6 +52,48 @@ describe('Prism canonical site completeness', () => {
     expect(nav).not.toContain("to: '/gift'");
   });
 
+  it('does not sell canvas in cancelled-checkout copy on /create', () => {
+    const studioPage = readRepoFile('src/pages/StudioPage.tsx');
+    const cancelledBlock = studioPage.slice(studioPage.indexOf("checkoutStatus === 'cancelled'"));
+    expect(cancelledBlock).toContain('Checkout was cancelled.');
+    expect(cancelledBlock).toContain('You can try again whenever you’re ready.');
+    expect(cancelledBlock.toLowerCase()).not.toContain('canvas');
+    expect(cancelledBlock).not.toMatch(/\$\d/);
+    expect(studioPage).not.toContain('Adjust your canvas');
+  });
+
+  it('hides SUPPORT until a real support inbox exists', () => {
+    const nav = readRepoFile('src/components/navigation/FounderNavigation.tsx');
+    const footer = readRepoFile('src/sections/FooterCTA.tsx');
+    const steps = readRepoFile('src/sections/StepsJourney.tsx');
+    const memorial = readRepoFile('src/pages/MemorialPage.tsx');
+    const gift = readRepoFile('src/pages/GiftPage.tsx');
+
+    expect(nav).not.toContain("label: 'SUPPORT'");
+    expect(nav).not.toContain('/#support');
+    expect(nav).not.toMatch(/mailto:/i);
+    expect(footer).not.toMatch(/SUPPORT/i);
+    expect(footer).not.toContain('/#support');
+    expect(footer).not.toMatch(/mailto:/i);
+    expect(steps).not.toContain('id="support"');
+    expect(steps).not.toContain('data-founder-anchor="support"');
+    expect(memorial).not.toMatch(/SUPPORT/i);
+    expect(memorial).not.toContain('/#support');
+    expect(gift).not.toMatch(/SUPPORT/i);
+    expect(gift).not.toContain('/#support');
+  });
+
+  it('makes Alt+T a no-op when token packs are hidden', () => {
+    const nav = readRepoFile('src/components/navigation/FounderNavigation.tsx');
+    const handler = nav.slice(nav.indexOf('const handleKeydown'));
+    expect(handler).toContain("event.key.toLowerCase() === 't'");
+    expect(handler).toContain('rules.hideTokenPacks');
+    expect(handler.indexOf('if (rules.hideTokenPacks)')).toBeGreaterThan(-1);
+    expect(handler.indexOf('if (rules.hideTokenPacks)')).toBeLessThan(handler.indexOf('setTokenDrawerOpen(true)'));
+    expect(handler.indexOf('return;')).toBeGreaterThan(handler.indexOf('if (rules.hideTokenPacks)'));
+    expect(handler.indexOf('return;')).toBeLessThan(handler.indexOf('setTokenDrawerOpen(true)'));
+  });
+
   it('hides Living Canvas and Orders API coming soon on the first path', () => {
     const surface = readRepoFile('src/config/productSurface.ts');
     const actionGrid = readRepoFile('src/components/studio/ActionGrid.tsx');

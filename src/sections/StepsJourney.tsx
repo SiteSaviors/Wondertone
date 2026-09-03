@@ -27,7 +27,7 @@ const steps = [
 const StepsJourney = () => {
   return (
     <section className="bg-slate-900 py-20">
-      <Section id="support" data-founder-anchor="support">
+      <Section id="how-it-works" data-founder-anchor="how-it-works">
         <p className="text-sm uppercase tracking-[0.3em] text-brand-indigo">How it works</p>
         <h2 className="text-3xl font-semibold mt-3 mb-10">Upload → Choose a style → See it → Get the file.</h2>
         <div className="grid md:grid-cols-4 gap-6">

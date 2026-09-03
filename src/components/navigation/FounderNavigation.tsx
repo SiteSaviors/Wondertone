@@ -15,7 +15,7 @@ const AccountDropdown = lazy(() => import('@/components/navigation/AccountDropdo
 const NAV_LINKS = [
   { id: 'studio', label: 'STUDIO', to: '/create#studio', type: 'anchor' as const },
   { id: 'styles', label: 'STYLES', to: '/#styles', type: 'anchor' as const },
-  { id: 'support', label: 'SUPPORT', to: '/#support', type: 'anchor' as const },
+  // SUPPORT stays off until a real support inbox exists. Do not invent an email.
 ];
 
 const FounderNavigation = () => {
@@ -83,16 +83,20 @@ const FounderNavigation = () => {
 
   useEffect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
-      if (event.altKey && event.key.toLowerCase() === 't') {
-        event.preventDefault();
-        setTokenDrawerOpen(true);
+      if (!(event.altKey && event.key.toLowerCase() === 't')) {
+        return;
       }
+      if (rules.hideTokenPacks) {
+        return;
+      }
+      event.preventDefault();
+      setTokenDrawerOpen(true);
     };
     window.addEventListener('keydown', handleKeydown);
     return () => {
       window.removeEventListener('keydown', handleKeydown);
     };
-  }, []);
+  }, [rules.hideTokenPacks]);
 
   const handlePortalRequest = useCallback(
     async (intent: 'cancel' | 'update') => {

@@ -74,7 +74,7 @@ const StudioPage = () => {
     } else if (checkoutStatus === 'cancelled') {
       setCheckoutNotice({
         variant: 'warning',
-        message: 'Checkout was cancelled. Adjust your canvas and try again whenever you’re ready.',
+        message: 'Checkout was cancelled. You can try again whenever you’re ready.',
       });
     }
 
