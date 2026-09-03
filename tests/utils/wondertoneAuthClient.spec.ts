@@ -17,7 +17,7 @@ const createSession = (accessToken: string | null): Session => {
     access_token: accessToken,
     refresh_token: accessToken,
     expires_in: 3600,
-    expires_at: Math.floor(Date.now() / 1000) + 3600,
+    expires_at: 1_788_432_000,
     token_type: 'bearer',
     user: null,
     provider_token: null,
