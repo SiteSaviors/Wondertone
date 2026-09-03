@@ -75,7 +75,7 @@ describe('memorial, legal shells, and SPA routing', () => {
     expect(vercel).toContain('/gift');
     expect(vercel).toContain('/privacy');
     expect(vercel).toContain('/terms');
-    expect(vercel).toMatch(/\(\?\!api\//);
+    expect(vercel).toMatch(/\(\?!api\//);
     expect(vercel).toContain('assets/');
   });
 });
