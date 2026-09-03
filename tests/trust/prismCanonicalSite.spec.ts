@@ -86,12 +86,11 @@ describe('Prism canonical site completeness', () => {
   it('makes Alt+T a no-op when token packs are hidden', () => {
     const nav = readRepoFile('src/components/navigation/FounderNavigation.tsx');
     const handler = nav.slice(nav.indexOf('const handleKeydown'));
+    const hideGuard = handler.slice(handler.indexOf('if (rules.hideTokenPacks)'));
     expect(handler).toContain("event.key.toLowerCase() === 't'");
-    expect(handler).toContain('rules.hideTokenPacks');
-    expect(handler.indexOf('if (rules.hideTokenPacks)')).toBeGreaterThan(-1);
-    expect(handler.indexOf('if (rules.hideTokenPacks)')).toBeLessThan(handler.indexOf('setTokenDrawerOpen(true)'));
-    expect(handler.indexOf('return;')).toBeGreaterThan(handler.indexOf('if (rules.hideTokenPacks)'));
-    expect(handler.indexOf('return;')).toBeLessThan(handler.indexOf('setTokenDrawerOpen(true)'));
+    expect(hideGuard).toMatch(/if \(rules\.hideTokenPacks\) \{\s*return;/);
+    expect(hideGuard.indexOf('return;')).toBeLessThan(hideGuard.indexOf('setTokenDrawerOpen(true)'));
+    expect(hideGuard.indexOf('preventDefault')).toBeGreaterThan(hideGuard.indexOf('return;'));
   });
 
   it('hides Living Canvas and Orders API coming soon on the first path', () => {
