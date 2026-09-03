@@ -23,10 +23,12 @@ import type { CacheStatus } from './types.ts';
 import { resolveEntitlements, computeRemainingAfterDebet, type EntitlementContext } from './entitlements.ts';
 import { WatermarkService } from './watermarkService.ts';
 import {
+  buildPublicUrl,
   downloadStorageObject,
   parseStoragePath,
   parseStorageUrl,
-  buildPublicUrl,
+  resolveLocatorAccessUrl,
+  shouldIssuePublicObjectUrl,
   type StorageObjectRef
 } from '../_shared/storageUtils.ts';
 
@@ -150,15 +152,12 @@ async function normalizeImageInput(
   } catch (error) {
     console.error('Failed to normalize image input', {
       bucket: storageRef.bucket,
-      path: storageRef.path,
       message: error instanceof Error ? error.message : String(error),
     });
     if (PREVIEW_DEBUG_LOGS) {
       console.log('[preview-debug] normalize_failure', {
         requestId: context?.requestId ?? null,
-        sourceStoragePath: context?.sourceStoragePath ?? null,
         bucket: storageRef.bucket,
-        path: storageRef.path,
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -179,6 +178,20 @@ const computeStoragePath = (styleId: number, aspectRatio: string, quality: strin
   const sanitizedAspect = aspectRatio.toLowerCase();
   const sanitizedQuality = quality.toLowerCase();
   return `${styleId}/${sanitizedQuality}/${sanitizedAspect}/${imageDigest}.jpg`;
+};
+
+const mintPipelinePreviewUrl = async (
+  supabase: ReturnType<typeof createClient>,
+  locator: string
+): Promise<string> => {
+  const accessUrl = await resolveLocatorAccessUrl(supabase, locator, {
+    pipelineAuthorized: true,
+    entitledToClean: true,
+  });
+  if (!accessUrl) {
+    throw new Error('clean_art_signed_url_failed');
+  }
+  return accessUrl;
 };
 
 async function handleWebhookRequest(req: Request, url: URL, origin: string | null): Promise<Response> {
@@ -259,7 +272,7 @@ async function handleWebhookRequest(req: Request, url: URL, origin: string | nul
 
           const storagePath = computeStoragePath(styleId, aspectRatio, quality, imageDigest);
 
-          // OPUS PLAN: Store clean output only, no pre-watermarking
+          // Store clean output as a locator; status GET mints a signed URL.
           const uploadResult = await storageClient.uploadFromUrl(output, storagePath, {}, false);
           previewUrl = uploadResult.publicUrl;
 
@@ -284,7 +297,6 @@ async function handleWebhookRequest(req: Request, url: URL, origin: string | nul
 
           webhookLogger.info('Clean preview cached from webhook (watermark will be applied on-the-fly)', {
             requestId: statusRow.request_id,
-            storagePath,
             requiresWatermark: watermark
           });
         } else {
@@ -356,6 +368,15 @@ async function handleStatusRequest(url: URL, origin: string | null): Promise<Res
 
   if (error || !data) {
     return createCorsResponse(JSON.stringify({ error: 'not_found' }), 404, origin ?? undefined);
+  }
+
+  const status = typeof data.status === 'string' ? data.status.toLowerCase() : '';
+  if ((status === 'succeeded' || status === 'complete') && typeof data.preview_url === 'string' && data.preview_url) {
+    try {
+      data.preview_url = await mintPipelinePreviewUrl(supabase, data.preview_url);
+    } catch {
+      return createCorsResponse(JSON.stringify({ error: 'clean_art_signed_url_failed' }), 500, origin ?? undefined);
+    }
   }
 
   return createCorsResponse(JSON.stringify(data), 200, origin ?? undefined);
@@ -431,8 +452,7 @@ serve(async (req) => {
     const requestedSourceRef = sanitizeStorageRef(requestSourceStoragePath);
     if (requestSourceStoragePath && !requestedSourceRef) {
       logger.warn('Invalid sourceStoragePath provided; ignoring value', {
-        requestId,
-        provided: requestSourceStoragePath
+        requestId
       });
     }
     let sourceStoragePath: string | null = requestSourceStoragePath && requestedSourceRef
@@ -444,14 +464,14 @@ serve(async (req) => {
         ? requestSourceDisplayUrl
         : null;
 
-    if (requestedSourceRef && !sourceDisplayUrl) {
+    if (requestedSourceRef && !sourceDisplayUrl && shouldIssuePublicObjectUrl(requestedSourceRef.bucket)) {
       sourceDisplayUrl = buildPublicUrl(requestedSourceRef);
     }
 
     const imageSourceRef = sanitizeStorageRef(imageUrl);
     if (!sourceStoragePath && imageSourceRef) {
       sourceStoragePath = `${imageSourceRef.bucket}/${imageSourceRef.path}`;
-      if (!sourceDisplayUrl) {
+      if (!sourceDisplayUrl && shouldIssuePublicObjectUrl(imageSourceRef.bucket)) {
         sourceDisplayUrl = buildPublicUrl(imageSourceRef);
       }
     }
@@ -651,8 +671,15 @@ serve(async (req) => {
         const tierLabel = entitlementContext?.tierLabel ?? existingLog.tier ?? undefined;
         const priority = entitlementContext?.priority ?? existingLog.priority ?? 'normal';
         const requiresWatermark = entitlementContext?.requiresWatermark ?? existingLog.requires_watermark ?? true;
-        // OPUS PLAN: Return clean URL always, watermarking happens on-the-fly via separate endpoint
-        const previewUrlForResponse = existingLog.preview_url;
+        let previewUrlForResponse: string;
+        try {
+          previewUrlForResponse = await mintPipelinePreviewUrl(supabase, existingLog.preview_url);
+        } catch {
+          return respond(
+            JSON.stringify(createErrorResponse('clean_art_access', 'Unable to authorize clean artwork access', requestId, 'CLEAN_ART_ACCESS')),
+            500
+          );
+        }
 
         logger.info('Returning cached idempotent preview result', {
           requestId,
@@ -838,11 +865,20 @@ serve(async (req) => {
 
     async function recordPreviewSuccess(previewUrl: string, cacheStatus: CacheStatus, statusCode = 200): Promise<Response> {
       const tokensDebit = entitlementContext && !entitlementContext.devBypass ? 1 : 0;
-      const cleanStorageUrl = previewUrl;
       const storagePath = extractStoragePath(previewUrl);
 
+      let accessUrl: string;
+      try {
+        accessUrl = await mintPipelinePreviewUrl(supabase, previewUrl);
+      } catch {
+        return respond(
+          JSON.stringify(createErrorResponse('clean_art_access', 'Unable to authorize clean artwork access', requestId, 'CLEAN_ART_ACCESS')),
+          500
+        );
+      }
+
       // OPUS PLAN: Apply watermark on-the-fly before returning to client
-      let finalPreviewUrl = previewUrl;
+      let finalPreviewUrl = accessUrl;
 
       if (effectiveWatermark && previewUrl) {
         try {
@@ -859,10 +895,14 @@ serve(async (req) => {
 
           logger.info('[on-the-fly] Applied watermark before returning to client', { requestId });
         } catch (error) {
-          logger.error('[on-the-fly] Watermark application failed, returning clean URL', {
+          logger.error('[on-the-fly] Watermark application failed', {
             requestId,
             error: error instanceof Error ? error.message : String(error)
           });
+          return respond(
+            JSON.stringify(createErrorResponse('watermark_failed', 'Unable to prepare display preview', requestId, 'WATERMARK_FAILED')),
+            500
+          );
         }
       }
 
@@ -871,7 +911,7 @@ serve(async (req) => {
           .from('preview_logs')
           .update({
             outcome: 'success',
-            preview_url: previewUrl, // Store clean URL
+            preview_url: previewUrl,
             tokens_spent: tokensDebit,
             watermark: effectiveWatermark,
             requires_watermark: effectiveWatermark,
@@ -891,7 +931,7 @@ serve(async (req) => {
         : null;
 
       const payload = createSuccessResponse({
-        previewUrl: finalPreviewUrl, // Return watermarked data URL for free users, clean URL for paid
+        previewUrl: finalPreviewUrl,
         requestId,
         duration: Date.now() - startTime,
         cacheStatus,
@@ -899,7 +939,7 @@ serve(async (req) => {
         requiresWatermark: effectiveWatermark,
         remainingTokens,
         priority: entitlementContext?.priority ?? 'normal',
-        storageUrl: cleanStorageUrl,
+        storageUrl: accessUrl,
         storagePath,
         softRemaining: null,
         sourceStoragePath,
@@ -1006,7 +1046,7 @@ serve(async (req) => {
     } catch (error) {
       logger.error('Image normalization failed', {
         requestId,
-        imageUrl: imageUrl.substring(0, 100),
+        inputScheme: imageUrl.startsWith('data:') ? 'data-uri' : 'remote',
         error: error instanceof Error ? error.message : String(error)
       });
       return await recordPreviewFailure(
@@ -1058,7 +1098,6 @@ serve(async (req) => {
 
           logger.info('Clean preview cached (watermark will be applied on-the-fly)', {
             requestId,
-            storagePath,
             requiresWatermark: effectiveWatermark
           });
 

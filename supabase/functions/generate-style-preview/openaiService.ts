@@ -32,11 +32,11 @@ export class OpenAIService {
           return `data:image/png;base64,${result.data[0].b64_json}`;
         }
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error(`🔧 [DIAGNOSTIC] Image generation failed - Status: ${response.status}, Error:`, errorData);
+        await response.json().catch(() => ({}));
+        console.error('OpenAI image generation failed', { status: response.status });
       }
-    } catch (_error) {
-      console.error(`🔧 [DIAGNOSTIC] Image generation exception:`, error);
+    } catch {
+      console.error('OpenAI image generation exception', { code: 'openai_generation_exception' });
     }
     return null;
   }
@@ -64,11 +64,11 @@ export class OpenAIService {
           return result.data[0].url;
         }
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error(`🔧 [DIAGNOSTIC] Image variations failed - Status: ${response.status}, Error:`, errorData);
+        await response.json().catch(() => ({}));
+        console.error('OpenAI image variations failed', { status: response.status });
       }
-    } catch (_error) {
-      console.error(`🔧 [DIAGNOSTIC] Image variations exception:`, error);
+    } catch {
+      console.error('OpenAI image variations exception', { code: 'openai_variations_exception' });
     }
     return null;
   }
@@ -96,11 +96,11 @@ export class OpenAIService {
           return result.data[0].url;
         }
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error(`🔧 [DIAGNOSTIC] Image edits failed - Status: ${response.status}, Error:`, errorData);
+        await response.json().catch(() => ({}));
+        console.error('OpenAI image edits failed', { status: response.status });
       }
-    } catch (_error) {
-      console.error(`🔧 [DIAGNOSTIC] Image edits exception:`, error);
+    } catch {
+      console.error('OpenAI image edits exception', { code: 'openai_edits_exception' });
     }
     return null;
   }

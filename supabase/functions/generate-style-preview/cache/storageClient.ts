@@ -7,8 +7,10 @@ interface UploadOptions {
 
 export interface StorageUploadResult {
   storagePath: string;
+  /** Locator only — never treat as entitlement or a fetchable clean-art URL. */
   publicUrl: string;
   isPublicBucket: boolean;
+  bucket: string;
 }
 
 export interface SignedUrlResult {
@@ -90,8 +92,19 @@ export class PreviewStorageClient {
       throw new Error(`Supabase storage upload failed: ${uploadResponse.error.message}`);
     }
 
-    // For public bucket, return public URL
-    // For premium bucket, we'll generate signed URLs on-demand
+    // Public display bucket: world-readable URL is the access URL.
+    // Premium clean bucket: return a storage locator only. Callers must mint
+    // a short-lived signed URL after authorization. Never treat getPublicUrl
+    // as proof of entitlement.
+    if (!isPublicBucket) {
+      return {
+        storagePath,
+        publicUrl: `${this.premiumBucket}/${storagePath}`,
+        isPublicBucket,
+        bucket: targetBucket
+      };
+    }
+
     const publicUrlResponse = this.supabase
       .storage
       .from(targetBucket)
@@ -108,15 +121,18 @@ export class PreviewStorageClient {
     return {
       storagePath,
       publicUrl,
-      isPublicBucket
+      isPublicBucket,
+      bucket: targetBucket
     };
   }
 
   getPublicUrl(storagePath: string, isPublicBucket = true): string | null {
-    const bucket = isPublicBucket ? this.publicBucket : this.premiumBucket;
+    if (!isPublicBucket) {
+      return null;
+    }
     const publicUrlResponse = this.supabase
       .storage
-      .from(bucket)
+      .from(this.publicBucket)
       .getPublicUrl(storagePath, {
         transform: undefined
       });
