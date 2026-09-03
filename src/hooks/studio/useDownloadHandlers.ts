@@ -54,10 +54,10 @@ export const useDownloadHandlers = () => {
         return;
       }
 
-      if (result.status === 'error') {
+      if (result.status !== 'entitled') {
         showToast({
           title: 'Download unavailable',
-          description: result.message,
+          description: result.status === 'error' ? result.message : 'Entitlement is required before the file is available.',
           variant: 'warning',
         });
         return;

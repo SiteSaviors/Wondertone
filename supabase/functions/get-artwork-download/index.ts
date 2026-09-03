@@ -91,7 +91,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (!entitlement) {
-      return json({ error: "entitlement_required" }, 402);
+      return json({ error: "entitlement_required", entitled: false }, 402);
     }
 
     const { data: logRow } = await supabase
@@ -114,7 +114,7 @@ serve(async (req) => {
       return json({ error: "signed_url_failed" }, 500);
     }
 
-    return json({ downloadUrl: signedUrl, sku: ARTWORK_SKU });
+    return json({ downloadUrl: signedUrl, sku: ARTWORK_SKU, entitled: true });
   } catch (error) {
     logger.error("download_failed", { message: safeErrorMessage(error) });
     return json({ error: "internal_error" }, 500);

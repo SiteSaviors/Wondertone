@@ -49,8 +49,15 @@ export async function requestArtworkDownload({
       return { status: 'error', message: 'Download is unavailable right now.' };
     }
 
-    const payload = (await response.json().catch(() => null)) as { downloadUrl?: string } | null;
-    if (!payload?.downloadUrl || typeof payload.downloadUrl !== 'string') {
+    const payload = (await response.json().catch(() => null)) as {
+      downloadUrl?: string;
+      entitled?: boolean;
+    } | null;
+    if (
+      payload?.entitled !== true ||
+      !payload.downloadUrl ||
+      typeof payload.downloadUrl !== 'string'
+    ) {
       return { status: 'error', message: 'Download is unavailable right now.' };
     }
 

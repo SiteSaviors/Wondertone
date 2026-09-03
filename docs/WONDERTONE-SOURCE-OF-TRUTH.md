@@ -26,7 +26,8 @@ Describes **current `main` plus this isolated trust-checkpoint PR**. Anything no
 - `/gift` is unlisted.
 - `/pricing` exists but is not a primary nav or first-path entrance.
 - Homepage style cards navigate to `/create?preselected_style=<id>`.
-- After reveal, the primary CTA is `revealed_artwork_full_res` only. Living Canvas toggle is hidden. “ORDERS API COMING SOON” is hidden.
+- After reveal, the primary CTA is `revealed_artwork_full_res` only. That control shows no dollar amount. Living Canvas toggle is hidden. “ORDERS API COMING SOON” is hidden.
+- No success UI, download, or conversion event until an `artwork_entitlements` row exists. Checkout success/redirect is not conversion. Conversion is `entitlement_granted` only.
 
 ## Memorial (first live entrance)
 

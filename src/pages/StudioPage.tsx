@@ -4,7 +4,6 @@ import ProductHeroSection from '@/sections/ProductHeroSection';
 import FounderNavigation from '@/components/navigation/FounderNavigation';
 import { LazyMotion, domAnimation } from 'framer-motion';
 import { useStyleCatalogActions, useStyleCatalogState } from '@/store/hooks/useStyleCatalogStore';
-import { useEntitlementsActions } from '@/store/hooks/useEntitlementsStore';
 import InstantBreadthStrip from '@/sections/studio/InstantBreadthStrip';
 import StyleInspirationSection from '@/sections/studio/StyleInspirationSection';
 import SocialProofSection from '@/sections/studio/SocialProofSection';
@@ -38,7 +37,6 @@ const StudioPage = () => {
   const navigate = useNavigate();
   const { preselectedStyleId } = useStyleCatalogState();
   const { setPreselectedStyle } = useStyleCatalogActions();
-  const { hydrateEntitlements } = useEntitlementsActions();
   const [checkoutNotice, setCheckoutNotice] = useState<{ variant: 'success' | 'warning'; message: string } | null>(null);
 
   useEffect(() => {
@@ -62,11 +60,7 @@ const StudioPage = () => {
     const checkoutStatus = params.get('checkout');
 
     if (checkoutStatus === 'success') {
-      setCheckoutNotice({
-        variant: 'success',
-        message: 'Order confirmed! Your Wondertone receipt is on the way.',
-      });
-      void hydrateEntitlements();
+      // Redirect is not conversion and must not unlock success UI or download.
     } else if (checkoutStatus === 'cancelled') {
       setCheckoutNotice({
         variant: 'warning',
@@ -78,7 +72,7 @@ const StudioPage = () => {
       params.delete('checkout');
       navigate({ pathname: location.pathname, search: params.toString() }, { replace: true });
     }
-  }, [location.pathname, location.search, hydrateEntitlements, navigate]);
+  }, [location.pathname, location.search, navigate]);
 
   return (
     <ProductSurfaceProvider surface="studio">

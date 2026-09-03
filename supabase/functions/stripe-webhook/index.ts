@@ -159,7 +159,8 @@ serve(async (req) => {
         );
       }
 
-      // This path does not write Creator/Plus/Pro or token credits.
+      // checkout.session.completed is not conversion. Conversion is entitlement_granted
+      // after an artwork_entitlements row exists.
       if (sku === ARTWORK_SKU && userId) {
         await grantArtworkEntitlement({
           userId,

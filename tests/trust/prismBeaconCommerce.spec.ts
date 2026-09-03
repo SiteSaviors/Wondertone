@@ -22,6 +22,9 @@ describe('Beacon commerce primitives', () => {
     expect(webhook).toContain('stripe_event_ledger');
     expect(webhook).toContain('artwork_entitlements');
     expect(webhook).toContain('entitlement_granted');
+    expect(webhook).toContain('checkout.session.completed is not conversion');
+    const grantFn = webhook.slice(webhook.indexOf('const grantArtworkEntitlement'));
+    expect(grantFn.indexOf('.from("artwork_entitlements")')).toBeLessThan(grantFn.indexOf('persistEntitlementGranted'));
     expect(webhook).not.toContain('upsertSubscription');
     expect(webhook).not.toContain("tier: 'creator'");
   });
