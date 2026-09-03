@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import { useState, useEffect, useMemo, useRef, lazy, Suspense, type CSSProperties } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -7,12 +7,13 @@ import { useHandleStyleSelect } from '@/sections/studio/hooks/useHandleStyleSele
 import { useStudioFeedback } from '@/hooks/useStudioFeedback';
 import { emitStepOneEvent } from '@/utils/telemetry';
 import { useStyleThumbnailPrefetch } from '@/sections/studio/hooks/useStyleThumbnailPrefetch';
-import ToneSection from './ToneSection';
 import type { PrefetchGroupStatus } from '@/sections/studio/hooks/useStyleThumbnailPrefetch';
 import type { StyleTone } from '@/config/styleCatalog';
 import type { GateResult } from '@/utils/entitlementGate';
 import { TONE_GRADIENTS } from '@/config/toneGradients';
 import './StyleAccordion.css';
+
+const ToneSection = lazy(() => import('./ToneSection'));
 
 type StyleAccordionProps = {
   hasCroppedImage: boolean;
@@ -321,17 +322,19 @@ export default function StyleAccordion({ hasCroppedImage }: StyleAccordionProps)
               </div>
             )}
 
-            <ToneSection
-              section={section}
-              toneMeta={TONE_GRADIENTS[section.tone]}
-              prefersReducedMotion={prefersReducedMotion}
-              onStyleSelect={(styleId, meta) => {
-                handleStyleSelect(styleId, meta);
-              }}
-              isExpanded={isExpanded}
-              onToggle={() => toggleTone(section.tone)}
-              prefetchStatus={prefetchStatus}
-            />
+            <Suspense fallback={<div className="min-h-[72px]" aria-hidden="true" />}>
+              <ToneSection
+                section={section}
+                toneMeta={TONE_GRADIENTS[section.tone]}
+                prefersReducedMotion={prefersReducedMotion}
+                onStyleSelect={(styleId, meta) => {
+                  handleStyleSelect(styleId, meta);
+                }}
+                isExpanded={isExpanded}
+                onToggle={() => toggleTone(section.tone)}
+                prefetchStatus={prefetchStatus}
+              />
+            </Suspense>
           </motion.div>
           );
         })}
