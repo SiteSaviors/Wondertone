@@ -1,24 +1,13 @@
-import { SubscriptionSection } from '@/pages/PricingPage';
+import PricingPage from '@/pages/PricingPage';
 
 const meta = {
-  title: 'Pages/Pricing/SubscriptionSection',
-  component: SubscriptionSection,
+  title: 'Pages/Pricing/Parked',
+  component: PricingPage,
   parameters: {
     layout: 'fullscreen',
-  },
-  args: {
-    isVisible: true,
-    currentTier: 'free',
-    loadingTier: null,
   },
 };
 
 export default meta;
 
-export const Visible = (args: React.ComponentProps<typeof SubscriptionSection>) => (
-  <SubscriptionSection {...args} onSelectTier={() => {}} />
-);
-
-export const Hidden = (args: React.ComponentProps<typeof SubscriptionSection>) => (
-  <SubscriptionSection {...args} isVisible={false} onSelectTier={() => {}} />
-);
+export const Parked = () => <PricingPage />;

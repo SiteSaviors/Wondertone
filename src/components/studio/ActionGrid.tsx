@@ -29,7 +29,7 @@ export function ActionGrid({
     onDownload();
   };
 
-  const fullResLabel = surface === 'memorial' ? 'Get the full-resolution file.' : 'Get the full-resolution file';
+  const fullResLabel = surface === 'memorial' ? 'Get the full-resolution file.' : 'Get the full-resolution artwork';
 
   return (
     <div className="w-full">

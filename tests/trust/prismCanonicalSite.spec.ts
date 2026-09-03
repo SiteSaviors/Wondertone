@@ -50,6 +50,16 @@ describe('Prism canonical site completeness', () => {
     expect(gift).toContain('to="/terms"');
     expect(nav).not.toContain("to: '/pricing'");
     expect(nav).not.toContain("to: '/gift'");
+    const title = readRepoFile('index.html');
+    expect(title).toContain('Wondertone | Your photo. A style. Art you actually want.');
+    expect(title).not.toMatch(/Transform Your Memories|AI-Powered Canvas|Living Canvas/i);
+    expect(title).not.toMatch(/\$\d|4\.9|10,000/);
+    const pricing = readRepoFile('src/pages/PricingPage.tsx');
+    expect(pricing).toContain('Memberships and token packs are not for sale.');
+    expect(pricing).not.toMatch(/\$7\.99|\$19\.99|\$49\.99/);
+    const account = readRepoFile('src/components/navigation/AccountDropdown.tsx');
+    expect(account).toContain('hideSubscriptionTiers');
+    expect(account.indexOf('!rules.hideSubscriptionTiers')).toBeLessThan(account.indexOf('Explore plans'));
   });
 
   it('does not sell canvas in cancelled-checkout copy on /create', () => {

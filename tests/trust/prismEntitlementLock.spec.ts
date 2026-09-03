@@ -10,7 +10,7 @@ describe('Beacon/Prism entitlement lock', () => {
     const actionGrid = readRepoFile('src/components/studio/ActionGrid.tsx');
     const paywall = readRepoFile('src/components/modals/DownloadUpgradeModal.tsx');
     expect(actionGrid).toContain('data-sku="revealed_artwork_full_res"');
-    expect(actionGrid).toContain('Get the full-resolution file');
+    expect(actionGrid).toContain('Get the full-resolution artwork');
     expect(actionGrid).not.toMatch(/\$\d/);
     expect(paywall).toContain('data-sku="revealed_artwork_full_res"');
     expect(paywall).not.toMatch(/\$\d/);

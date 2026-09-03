@@ -1,5 +1,6 @@
 import { Suspense, forwardRef, useState, type ComponentPropsWithoutRef } from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { useProductSurface } from '@/providers/ProductSurfaceProvider';
 
 export type AccountDropdownProps = {
   accountInitial: string;
@@ -62,6 +63,7 @@ const AccountDropdown = ({
   canUpgrade,
 }: AccountDropdownProps) => {
   const [open, setOpen] = useState(false);
+  const { rules } = useProductSurface();
 
   const handleMenuAction = (callback: () => void) => {
     setOpen(false);
@@ -152,12 +154,14 @@ const AccountDropdown = ({
             >
               Create account
             </DropdownMenu.Item>
+            {!rules.hideSubscriptionTiers && (
             <DropdownMenu.Item
               className="cursor-pointer rounded-xl px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
               onSelect={() => handleMenuAction(() => onNavigate('/pricing'))}
             >
               Explore plans
             </DropdownMenu.Item>
+            )}
           </div>
         )
       ) : (

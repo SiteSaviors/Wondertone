@@ -195,7 +195,7 @@ describe('Studio orientation + canvas CTA integration', () => {
       );
     });
 
-    const fullResButton = await waitForButton(container, 'Get the full-resolution file');
+    const fullResButton = await waitForButton(container, 'Get the full-resolution artwork');
     expect(fullResButton.getAttribute('data-sku')).toBe('revealed_artwork_full_res');
     expect(container.textContent).not.toContain('Create Canvas Art');
     expect(container.textContent).not.toMatch(/ORDERS API COMING SOON/i);

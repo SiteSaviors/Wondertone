@@ -1,39 +1,24 @@
-/**
- * @vitest-environment jsdom
- */
-import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import { SubscriptionSection } from '@/pages/PricingPage';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { describe, expect, it } from 'vitest';
 
-describe('SubscriptionSection', () => {
-  const handleSelect = vi.fn();
+const readRepoFile = (relativePath: string) =>
+  readFileSync(path.resolve(process.cwd(), relativePath), 'utf8');
 
-  it('does not render when invisible', () => {
-    const { container } = render(
-      <SubscriptionSection
-        isVisible={false}
-        currentTier="free"
-        loadingTier={null}
-        onSelectTier={handleSelect}
-      />
-    );
-
-    expect(container.firstChild).toBeNull();
-    expect(screen.queryByText(/Wondertone Free/i)).toBeNull();
-  });
-
-  it('renders tiers when visible', () => {
-    render(
-      <SubscriptionSection
-        isVisible
-        currentTier="free"
-        loadingTier={null}
-        onSelectTier={handleSelect}
-      />
-    );
-
-    expect(screen.getByText(/Wondertone Free/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Creator/i).length).toBeGreaterThan(0);
+describe('parked /pricing route', () => {
+  it('does not render Creator/Plus/Pro or token packs as a live offer', () => {
+    const pricing = readRepoFile('src/pages/PricingPage.tsx');
+    expect(pricing).toContain('Memberships and token packs are not for sale.');
+    expect(pricing).toContain('This route is parked');
+    expect(pricing).toContain('to="/create"');
+    expect(pricing).not.toContain('PREMIUM_TIERS');
+    expect(pricing).not.toContain('TOKEN_PACKS');
+    expect(pricing).not.toContain('createCheckoutSession');
+    expect(pricing).not.toContain('useTokenPackCheckout');
+    expect(pricing).not.toContain('TierCard');
+    expect(pricing).not.toContain('TokenPackCard');
+    expect(pricing).not.toContain('PricingModeToggle');
+    expect(pricing).not.toMatch(/\$7\.99|\$19\.99|\$49\.99/);
+    expect(pricing).not.toMatch(/\$\d/);
   });
 });
