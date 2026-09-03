@@ -22,7 +22,6 @@ export const FREE_TIER: SubscriptionTier = {
   tokensLabel: 'Tokens',
   features: [
     'Watermarked previews',
-    'Living Canvas demo access',
     'Smart style recommendations',
     'Community momentum feed',
   ],
@@ -40,7 +39,6 @@ export const PREMIUM_TIERS: SubscriptionTier[] = [
     features: [
       '50 premium generations each month',
       'Watermark-free previews & HD downloads',
-      'Living Canvas AR downloads',
       'Priority notifications from Wondertone queues',
       'Creator badge inside Studio & marketplace',
     ],
@@ -74,7 +72,6 @@ export const PREMIUM_TIERS: SubscriptionTier[] = [
       'Wondertone concierge & white-label support',
       'Real-time teleprompter prompts for live events',
       'Priority queue (3× speed boost)',
-      'Guaranteed Living Canvas production in 48h',
     ],
     gradient: 'from-[#ffa62e]/85 via-[#ff6b45]/85 to-[#f63b81]/85',
   },

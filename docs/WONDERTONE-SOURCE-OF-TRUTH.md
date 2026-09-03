@@ -13,8 +13,9 @@ Describes **current `main` plus this isolated trust-checkpoint PR**. Anything no
 - Dual buckets stay: public display (lower-res, no logo overlay) vs private clean full-res.
 - Customer photographs and clean artwork are owner-isolated.
 - The browser is never authoritative for payment, entitlement, or order completion.
-- Living Canvas remains **purchase-disabled**.
+- Living Canvas remains **purchase-disabled** and **unadvertised**.
 - Creator / Plus / Pro and token packs are not sold on the Beacon artwork path.
+- Homepage, pricing, and related marketing no longer claim unverified counts, ratings, press logos, ship-in-days promises, or “stays private always.” Do not invent replacement social proof.
 
 ## Memorial (first live entrance)
 

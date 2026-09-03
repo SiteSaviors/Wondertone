@@ -79,7 +79,7 @@ const SocialProofSectionInner = () => {
             Proof of Wonder
           </div>
           <h2 className="font-poppins text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-[52px]">
-            Join 10,000+ creators transforming photos in seconds.
+            Transform a photo into artwork.
           </h2>
           <p className="mx-auto max-w-2xl text-base text-white/70 sm:text-lg">
             Watermark-free digital exports for your feed or portfolio. Premium canvases when

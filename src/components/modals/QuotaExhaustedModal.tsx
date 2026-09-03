@@ -30,7 +30,7 @@ const TIER_DATA: Record<string, TierInfo> = {
     name: 'Creator',
     quota: 50,
     price: '$7.99/month',
-    features: ['50 watermark-free tokens', 'Living Canvas downloads', 'Priority queue', 'Creator badge'],
+    features: ['50 watermark-free tokens', 'Priority queue', 'Creator badge'],
     gradient: 'from-purple-500/20 via-indigo-500/20 to-blue-500/20',
   },
   plus: {
@@ -44,7 +44,7 @@ const TIER_DATA: Record<string, TierInfo> = {
     name: 'Pro',
     quota: 400,
     price: '$49.99/month',
-    features: ['400 premium tokens', 'Wondertone concierge', 'Priority queue (3× speed)', '48h Living Canvas'],
+    features: ['400 premium tokens', 'Wondertone concierge', 'Priority queue (3× speed)'],
     gradient: 'from-orange-500/20 via-pink-500/20 to-red-500/20',
   },
 };

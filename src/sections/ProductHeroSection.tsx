@@ -5,8 +5,6 @@ import { trackLaunchflowOpened } from '@/utils/launchflowTelemetry';
 import GeneratingCanvasAnimation from '@/components/hero/GeneratingCanvasAnimation';
 import StylePills from '@/components/hero/StylePills';
 import CTADeck from '@/components/hero/CTADeck';
-import TrustStrip from '@/components/hero/TrustStrip';
-import MomentumTicker from '@/components/hero/MomentumTicker';
 import AnimatedTransformBadge from '@/components/hero/AnimatedTransformBadge';
 import usePrefersReducedMotion from '@/hooks/usePrefersReducedMotion';
 import './ProductHeroSection.css';
@@ -214,21 +212,6 @@ const ProductHeroSection = () => {
             pills={STYLE_PILLS}
             onStyleChange={handleStyleChange}
           />
-
-          {/* Trust Strip - After visual proof */}
-          <TrustStrip
-            rating={4.9}
-            reviewCount={2341}
-            customerCount="10,000+"
-            customerPhotos={[
-              '/art-style-thumbnails/classic-oil-painting.webp',
-              '/art-style-thumbnails/modern-colorblock.webp',
-              '/art-style-thumbnails/watercolor-dreams.webp',
-            ]}
-          />
-
-          {/* Momentum Ticker */}
-          <MomentumTicker interval={4000} />
 
         </div>
       </Section>

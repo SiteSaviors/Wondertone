@@ -38,7 +38,7 @@ const CanvasCheckoutCanvasStep = ({
         ✨ Turn Your Memory Into a Masterpiece
       </Dialog.Title>
       <Dialog.Description className="font-poppins text-[16px] font-semibold leading-relaxed text-white/80">
-        Museum-grade canvas. Arrives ready to hang. Ships in 3-5 days.
+        Museum-grade canvas. Arrives ready to hang.
       </Dialog.Description>
       <CanvasCheckoutStepIndicator showTimer={false} timerSeed={timerSeed} timerRunning={canvasModalOpen} />
     </header>

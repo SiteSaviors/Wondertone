@@ -39,7 +39,7 @@ const HIGHLIGHTS: CanvasHighlight[] = [
     label: 'Shipping & Care',
     headline: 'Impact-tested packaging protects every corner in transit.',
     description:
-      'Foam guards, moisture wrap, and quick-turn studio handling ensure most orders ship within 3–4 business days.',
+      'Foam guards, moisture wrap, and studio handling protect the canvas in transit.',
     imageSrc: '/images/placeholders/canvas-packaging-1.jpg',
     imageAlt: 'Wondertone canvas protected inside premium packaging',
   },

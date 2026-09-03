@@ -59,7 +59,7 @@ const SellingPointsPanel = ({ onCreateCanvas }: { onCreateCanvas: () => void }) 
           </li>
           <li className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-300" />
-            <span>Ships in 5 days with protective packaging and tracking.</span>
+            <span>Protective packaging and tracking.</span>
           </li>
           <li className="flex items-start gap-3">
             <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-300" />

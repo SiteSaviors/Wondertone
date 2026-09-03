@@ -9,16 +9,12 @@ export const STUDIO_V2_COPY = {
   discoverLabels: ['Narrative', 'Emotion', 'Perfect For', 'Signature Detail'] as const,
   secondaryCta: {
     label: 'Create Canvas Print',
-    subtext: 'Orders ship in 5 days',
+    subtext: 'Create a canvas print',
   },
   canvasModal: {
     title: 'Configure Your Canvas',
-    subtitle: 'Museum-grade materials · Ships in 5 days · 100% satisfaction guarantee.',
-    trust: [
-      { icon: '⭐', copy: '4.9 • 1,200+ collectors' },
-      { icon: '🚚', copy: 'Ships in 5 days' },
-      { icon: '🛡️', copy: '100% satisfaction guarantee' },
-    ] as const,
+    subtitle: 'Museum-grade materials · 100% satisfaction guarantee.',
+    trust: [{ icon: '🛡️', copy: '100% satisfaction guarantee' }] as const,
     primaryCta: 'Complete Your Order →',
     reviewsPlaceholder: 'Collector reviews and gallery coming soon.',
   },

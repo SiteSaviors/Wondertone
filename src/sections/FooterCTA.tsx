@@ -26,8 +26,7 @@ const FooterCTA = () => {
       <Section id="pricing" data-founder-anchor="pricing" className="relative text-center space-y-10">
         <h2 className="text-4xl font-semibold">Ready to deliver the world’s most meaningful art gifts?</h2>
         <p className="text-white/70 max-w-2xl mx-auto text-lg">
-          Join tens of thousands of families, memory artists, and thoughtful gifters who trust Wondertone to preserve
-          their stories across canvas, AR, and digital keepsakes.
+          Upload a photo. Choose a style. Keep the artwork as a digital file or a canvas print.
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <a href="/create" className="btn-primary">

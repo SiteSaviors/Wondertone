@@ -112,10 +112,6 @@ const CheckoutSummary = () => {
           </p>
         </div>
         <div className="space-y-3 text-sm text-white/70">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            Ships in 3–5 business days
-          </div>
             <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-purple-400" />
             {entitlements.tier === 'free'

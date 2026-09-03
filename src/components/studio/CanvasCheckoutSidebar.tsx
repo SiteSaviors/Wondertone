@@ -97,7 +97,7 @@ const CanvasCheckoutSidebar = ({
     </div>
 
     <p className="mt-4 text-center text-[11px] leading-relaxed text-white/45">
-      ⭐ 4.9/5 from 1,200+ collectors · 🚚 5-day insured shipping · 🛡️ 100-day guarantee
+      🛡️ 100-day guarantee
     </p>
   </div>
 );

@@ -42,26 +42,7 @@ export type SpotlightStory = {
 const PLACEHOLDER_IMAGE =
   'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600"><rect width="600" height="600" fill="%231f2937"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23ffffff" font-family="Arial" font-size="28">Wondertone Placeholder</text></svg>';
 
-export const HERO_STATS: ReadonlyArray<HeroStat> = [
-  {
-    id: 'stat-previews',
-    value: '2.3M+',
-    label: 'Previews generated',
-    description: 'Creators used Wondertone to explore over 2.3 million art previews.',
-  },
-  {
-    id: 'stat-recommend',
-    value: '96%',
-    label: 'Recommend Wondertone',
-    description: 'Creator members who would recommend Wondertone to a friend.',
-  },
-  {
-    id: 'stat-canvases',
-    value: '12K',
-    label: 'Canvases shipped',
-    description: 'Premium gallery canvases delivered globally in the last 12 months.',
-  },
-] as const;
+export const HERO_STATS: ReadonlyArray<HeroStat> = [];
 
 export type SpotlightAnalyticsPayload = {
   id: SpotlightStory['id'];
@@ -69,36 +50,7 @@ export type SpotlightAnalyticsPayload = {
   interaction: 'auto' | 'manual';
 };
 
-export const PRESS_LOGOS: ReadonlyArray<PressLogo> = [
-  {
-    id: 'press-techcrunch',
-    name: 'TechCrunch',
-    logoSrc: '/press/techcrunch.svg',
-    alt: 'TechCrunch logo',
-    href: '#',
-  },
-  {
-    id: 'press-wired',
-    name: 'Wired',
-    logoSrc: '/press/wired.svg',
-    alt: 'Wired logo',
-    href: '#',
-  },
-  {
-    id: 'press-product-hunt',
-    name: 'Product Hunt',
-    logoSrc: '/press/product-hunt.svg',
-    alt: 'Product Hunt logo',
-    href: '#',
-  },
-  {
-    id: 'press-fast-company',
-    name: 'Fast Company',
-    logoSrc: '/press/fast-company.svg',
-    alt: 'Fast Company logo',
-    href: '#',
-  },
-] as const;
+export const PRESS_LOGOS: ReadonlyArray<PressLogo> = [];
 
 export const SPOTLIGHTS: ReadonlyArray<SpotlightStory> = [
   {
@@ -155,7 +107,7 @@ export const SPOTLIGHTS: ReadonlyArray<SpotlightStory> = [
     id: 'spotlight-wedding',
     title: 'Wedding Keepsake',
     quote: '“The couple cried seeing their gallery print—tone-matched to their palette.”',
-    metric: '24x36 canvas delivered in 4 days',
+    metric: '24x36 canvas',
     author: 'Aisha P.',
     product: 'canvas',
     beforeImage: PLACEHOLDER_IMAGE,

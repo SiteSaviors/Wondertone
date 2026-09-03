@@ -1,7 +1,6 @@
 import FounderNavigation from '@/components/navigation/FounderNavigation';
 import HeroSection from '@/sections/HeroSection';
 import StyleShowcase from '@/sections/StyleShowcase';
-import LivingCanvasStory from '@/sections/LivingCanvasStory';
 import StepsJourney from '@/sections/StepsJourney';
 import FooterCTA from '@/sections/FooterCTA';
 
@@ -11,7 +10,6 @@ const LandingPage = () => {
       <FounderNavigation />
       <HeroSection />
       <StyleShowcase />
-      <LivingCanvasStory />
       <StepsJourney />
       <FooterCTA />
     </div>

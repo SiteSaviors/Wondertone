@@ -385,15 +385,7 @@ const CanvasCheckoutModal = () => {
 
   const renderTrustSignals = () => (
     <section className="rounded-3xl border border-white/12 bg-white/5 p-5 text-sm text-white/70 transition hover:border-white/30 hover:bg-white/10">
-      <div className="grid gap-3 text-center sm:grid-cols-3">
-        <div className="rounded-2xl bg-white/10 px-3 py-3">
-          <p className="text-lg">⭐ 4.9</p>
-          <p className="text-xs text-white/60">1,200+ collectors</p>
-        </div>
-        <div className="rounded-2xl bg-white/10 px-3 py-3">
-          <p className="text-lg">🚚 5-day turn</p>
-          <p className="text-xs text-white/60">Handled & insured shipping</p>
-        </div>
+      <div className="grid gap-3 text-center">
         <div className="rounded-2xl bg-white/10 px-3 py-3">
           <p className="text-lg">🛡️ Guaranteed</p>
           <p className="text-xs text-white/60">Love it or we’ll remake it</p>

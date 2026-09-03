@@ -15,7 +15,7 @@ const steps = [
   {
     step: '03',
     title: 'Customize & Upsell',
-    description: 'Canvas, frame, Living Canvas, and digital bundles adjust the sticky order rail in real time.',
+    description: 'Canvas, frame, and digital options adjust the sticky order rail in real time.',
   },
   {
     step: '04',

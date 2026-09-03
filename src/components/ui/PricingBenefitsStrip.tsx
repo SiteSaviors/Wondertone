@@ -1,4 +1,4 @@
-import { Sparkles, Package, Brain, TrendingUp } from 'lucide-react';
+import { Package, Brain, TrendingUp } from 'lucide-react';
 
 type Benefit = {
   icon: React.ComponentType<{ className?: string }>;
@@ -8,12 +8,6 @@ type Benefit = {
 };
 
 const benefits: Benefit[] = [
-  {
-    icon: Sparkles,
-    title: 'Living Canvas AR Engine',
-    description: 'Guided studio flow with immersive AR previews',
-    gradient: 'from-purple-400 to-indigo-400',
-  },
   {
     icon: Package,
     title: 'Concierge Production',

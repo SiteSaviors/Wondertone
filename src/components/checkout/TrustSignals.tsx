@@ -113,15 +113,6 @@ const CtaStripSignal: React.FC<BaseSignalProps> = memo(({ className, style }) =>
         </span>{' '}
         Insured shipping
       </span>
-      <span className="text-white/30" aria-hidden="true">
-        ·
-      </span>
-      <span className="flex items-center gap-1">
-        <span role="img" aria-label="Star">
-          ⭐
-        </span>{' '}
-        4.9/5 from 1,200+ collectors
-      </span>
     </div>
   );
 });

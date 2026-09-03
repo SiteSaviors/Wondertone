@@ -14,11 +14,11 @@ const HeroSection = () => {
               <Sparkles className="w-4 h-4" /> Instant Preview Engine
             </Badge>
             <h1 className="text-4xl md:text-6xl font-semibold leading-tight drop-shadow-lg">
-              Bring memories to life with museum-grade AI art and Living Canvas AR.
+              Bring memories to life with museum-grade AI art.
             </h1>
             <p className="text-lg text-white/80 max-w-xl leading-relaxed">
               Wondertone merges human storytelling with a powerful studio workflow. Upload once, explore curated styles,
-              and checkout with physical canvas, instant digital, and AR experiences in minutes.
+              and checkout with physical canvas or instant digital in minutes.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/create" className="btn-primary">
@@ -29,20 +29,6 @@ const HeroSection = () => {
                 Browse Styles
                 <Play className="w-4 h-4" />
               </Link>
-            </div>
-            <div className="flex flex-wrap gap-6 text-sm text-white/75">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
-                10,000+ canvases delivered
-              </div>
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-300" />
-                4.9★ average delight score
-              </div>
-              <div className="flex items-center gap-2">
-                <Play className="w-4 h-4 text-emerald-300" />
-                Living Canvas AR included
-              </div>
             </div>
           </div>
           <div className="relative glow-ring">

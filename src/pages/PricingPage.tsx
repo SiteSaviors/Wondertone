@@ -318,9 +318,7 @@ const PricingPage = () => {
               <p className="mx-auto max-w-3xl text-base leading-relaxed text-white/75 md:text-lg">
                 Scale from personal keepsakes to live pop-up studios with monthly memberships or pay-as-you-go packs built
                 for emotion-rich art. Every option includes Wondertone&apos;s{' '}
-                <span className="font-semibold text-purple-300">Living Canvas engine</span>,{' '}
-                <span className="font-semibold text-cyan-300">curated style library</span>, and{' '}
-                <span className="font-semibold text-pink-300">social momentum intelligence</span>.
+                <span className="font-semibold text-cyan-300">curated style library</span>.
               </p>
 
               <div className="flex flex-col items-center gap-2">

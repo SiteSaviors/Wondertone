@@ -1,6 +1,6 @@
 /**
  * Product capabilities that must stay purchase-disabled until an explicit launch.
- * Living Canvas remains marketing-only: do not enable checkout or Stripe pricing for it.
+ * Living Canvas stays purchase-disabled and unadvertised. Do not enable checkout or Stripe pricing for it.
  * Creator/Plus/Pro and token packs are not sold on the Beacon artwork path.
  */
 export const PURCHASE_DISABLED_ENHANCEMENT_IDS = ['living-canvas'] as const;

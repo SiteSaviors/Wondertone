@@ -58,11 +58,6 @@ const StudioEmptyState = ({ onUpload, onBrowseStyles, launchflowOpen }: StudioEm
             </button>
           )}
         </div>
-        {surface !== 'memorial' && (
-          <p className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.28em] text-white/45">
-            Your image and artwork stays private—always.
-          </p>
-        )}
       </div>
     </div>
   </div>
