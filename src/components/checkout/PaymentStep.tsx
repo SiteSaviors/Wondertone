@@ -11,6 +11,8 @@ import { useSessionState } from '@/store/hooks/useSessionStore';
 import { shallow } from 'zustand/shallow';
 import { createOrderPaymentIntent } from '@/utils/checkoutApi';
 import { ORIENTATION_PRESETS } from '@/utils/smartCrop';
+import { filterPurchasableEnhancementIds } from '@/config/commerceGuards';
+import { devError } from '@/utils/devLogger';
 
 const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
 const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
@@ -108,7 +110,7 @@ const InnerPaymentFormComponent = ({ onSuccess, onBack, returnUrl }: InnerPaymen
             styleName: currentStyle?.name ?? null,
             canvasSizeId: selectedCanvasSize,
             orientation,
-            enhancementIds: enabledEnhancements.map((item) => item.id),
+            enhancementIds: filterPurchasableEnhancementIds(enabledEnhancements.map((item) => item.id)),
             previewUrl,
             contact,
             shipping,
@@ -124,15 +126,12 @@ const InnerPaymentFormComponent = ({ onSuccess, onBack, returnUrl }: InnerPaymen
           amount: response.amount,
           currency: response.currency,
         });
-      } catch (intentError) {
+      } catch (_intentError) {
         if (controller.signal.aborted || canceled) {
           return;
         }
-        console.error('[checkout] failed to create payment intent', intentError);
-        const message =
-          intentError instanceof Error
-            ? intentError.message
-            : 'Unable to prepare secure payment. Please try again.';
+        devError('checkout', 'failed to create payment intent');
+        const message = 'Unable to prepare secure payment. Please try again.';
         setError(message);
       } finally {
         if (!canceled) {

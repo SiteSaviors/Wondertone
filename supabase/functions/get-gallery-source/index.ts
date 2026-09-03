@@ -111,7 +111,7 @@ serve(async (req: Request) => {
         .maybeSingle();
 
       if (error) {
-        console.error('[get-gallery-source] Failed to load preview log', error);
+        console.error(JSON.stringify({ scope: 'get-gallery-source', message: 'preview_log_lookup_failed' }));
         return new Response(
           JSON.stringify({ error: 'Failed to look up preview log' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -149,7 +149,7 @@ serve(async (req: Request) => {
         .maybeSingle();
 
       if (pathError) {
-        console.error('[get-gallery-source] Failed to resolve preview log by storage path', pathError);
+        console.error(JSON.stringify({ scope: 'get-gallery-source', message: 'preview_log_path_lookup_failed' }));
         return new Response(
           JSON.stringify({ error: 'Failed to resolve storage path' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -194,8 +194,8 @@ serve(async (req: Request) => {
             'Content-Disposition': `inline; filename="${storageRef.path.split('/').pop() ?? 'source.jpg'}"`,
           },
         });
-      } catch (error) {
-        console.error('[get-gallery-source] Failed to download object', error);
+      } catch (_error) {
+        console.error(JSON.stringify({ scope: 'get-gallery-source', message: 'download_failed' }));
         return new Response(
           JSON.stringify({ error: 'Failed to download source image' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -222,15 +222,15 @@ serve(async (req: Request) => {
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    } catch (error) {
-      console.error('[get-gallery-source] Signed URL generation failed', error);
+    } catch (_error) {
+      console.error(JSON.stringify({ scope: 'get-gallery-source', message: 'signed_url_failed' }));
       return new Response(
         JSON.stringify({ error: 'Failed to create signed URL' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-  } catch (error) {
-    console.error('[get-gallery-source] Unexpected error', error);
+  } catch (_error) {
+    console.error(JSON.stringify({ scope: 'get-gallery-source', message: 'unexpected_error' }));
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -216,11 +216,11 @@ const PhotoUploader = () => {
             setOriginalImagePreviewLogId(null);
           }
         } else {
-          console.warn('[PhotoUploader] Persist original upload failed', persistResult);
+          console.warn('[PhotoUploader] Persist original upload failed', persistResult.ok ? 'ok' : persistResult.error);
           setOriginalImagePreviewLogId(null);
         }
-      } catch (error) {
-        console.error('[PhotoUploader] Unexpected error persisting original upload', error);
+      } catch (_error) {
+        console.error('[PhotoUploader] Unexpected error persisting original upload');
         setOriginalImagePreviewLogId(null);
       }
     }

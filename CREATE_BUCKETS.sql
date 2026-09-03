@@ -67,11 +67,9 @@ CREATE POLICY "Service role can delete premium previews"
   TO service_role
   USING (bucket_id = 'preview-cache-premium');
 
+-- Clean artwork is private. Do NOT grant authenticated SELECT on preview-cache-premium.
+-- Edge functions use the service role and mint owner-checked signed URLs.
 DROP POLICY IF EXISTS "Authenticated users can read premium previews via signed URLs" ON storage.objects;
-CREATE POLICY "Authenticated users can read premium previews via signed URLs"
-  ON storage.objects FOR SELECT
-  TO authenticated
-  USING (bucket_id = 'preview-cache-premium');
 
 -- 5. Verify buckets were created
 SELECT id, name, public FROM storage.buckets WHERE id LIKE 'preview-cache%';

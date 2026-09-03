@@ -21,6 +21,7 @@ const allowedBuckets = new Set(
 allowedBuckets.add('user-uploads');
 
 const PUBLIC_PREFIX = '/storage/v1/object/public/';
+const SIGN_PREFIX = '/storage/v1/object/sign/';
 
 const normalizePath = (value: string): string => value.replace(/^\/+/, '');
 
@@ -69,13 +70,15 @@ export const parseStorageUrl = (urlString: string): StorageObjectRef | null => {
       return null;
     }
 
-    const index = url.pathname.indexOf(PUBLIC_PREFIX);
-    if (index === -1) {
-      return null;
+    for (const prefix of [PUBLIC_PREFIX, SIGN_PREFIX]) {
+      const index = url.pathname.indexOf(prefix);
+      if (index !== -1) {
+        const pathAfterPrefix = url.pathname.slice(index + prefix.length);
+        return parseStoragePath(pathAfterPrefix);
+      }
     }
 
-    const pathAfterPrefix = url.pathname.slice(index + PUBLIC_PREFIX.length);
-    return parseStoragePath(pathAfterPrefix);
+    return null;
   } catch {
     return null;
   }

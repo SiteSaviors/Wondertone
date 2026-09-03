@@ -33,34 +33,16 @@ export class ReplicateService {
   }
 
   async generateImageToImage(imageData: string, prompt: string, aspectRatio: string = "1:1", quality: string = "medium"): Promise<ReplicateGenerationResponse> {
-    // Enhanced validation and logging
-    console.log(`🔧 [DEBUG] generateImageToImage called with:`, {
-      imageDataLength: imageData?.length || 0,
-      imageDataPrefix: imageData?.substring(0, 50) || 'null',
-      promptLength: prompt?.length || 0,
-      aspectRatio,
-      quality
-    });
-
     if (!this.apiToken || this.apiToken === 'undefined' || this.apiToken.trim() === '') {
-      console.error(`🔧 [DEBUG] Invalid Replicate API token:`, this.apiToken);
       throw new Error('Invalid or missing Replicate API token');
     }
 
-    // Validate image data format
     if (!imageData || !imageData.startsWith('data:image/')) {
-      console.error(`🔧 [DEBUG] Invalid image data format. Expected data:image/... but got:`, imageData?.substring(0, 100));
       throw new Error('Invalid image data format. Expected base64 data URL.');
     }
 
     // Enhance prompt with identity preservation rules
     const enhancedPrompt = PromptEnhancer.enhanceForIdentityPreservation(prompt);
-
-    console.log(`🔧 [DEBUG] Enhanced prompt:`, {
-      originalLength: prompt.length,
-      enhancedLength: enhancedPrompt.length,
-      identityRulesAdded: enhancedPrompt.includes('IDENTITY PRESERVATION RULES')
-    });
 
     const seedreamSize = mapQualityToSize(quality);
 
@@ -74,28 +56,12 @@ export class ReplicateService {
       }
     };
 
-    console.log(`🔧 [DEBUG] SeeDream request structure:`, {
-      input: {
-        prompt: prompt.substring(0, 100) + '...',
-        image_input_count: requestBody.input.image_input.length,
-        image_input_sample: requestBody.input.image_input[0]?.substring(0, 100) + '...',
-        aspect_ratio: requestBody.input.aspect_ratio,
-        size: requestBody.input.size,
-        max_images: requestBody.input.max_images
-      }
-    });
-
     try {
       // Execute with retry logic
       const result = await executeWithRetry(async () => {
         const data = await this.apiClient.createPrediction(requestBody);
 
         if (!data.ok) {
-          console.error('🔧 [DEBUG] Replicate createPrediction failure', {
-            status: data.status,
-            error: data.error,
-            technicalError: data.technicalError
-          });
           throw new Error(data.error || 'API call failed');
         }
 
@@ -136,11 +102,7 @@ export class ReplicateService {
       }, 'SeeDream Generation');
 
       if (!result.ok) {
-        console.error('🔧 [DEBUG] Replicate result not ok', {
-          error: result.error,
-          technicalError: result.technicalError,
-          errorType: result.errorType
-        });
+        console.error(JSON.stringify({ scope: 'replicate-service', message: 'generation_not_ok', errorType: result.errorType }));
       }
 
       return result;
@@ -148,12 +110,11 @@ export class ReplicateService {
     } catch (error) {
       const parsedError = EnhancedErrorHandler.parseError(error);
       const userMessage = EnhancedErrorHandler.createUserFriendlyMessage(parsedError);
-      console.error('🔧 [DEBUG] Replicate generateImageToImage exception', {
-        errorMessage: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        parsedError,
-        userMessage
-      });
+      console.error(JSON.stringify({
+        scope: 'replicate-service',
+        message: 'generation_exception',
+        errorType: parsedError.type,
+      }));
       
       return {
         ok: false,
@@ -177,12 +138,6 @@ export class ReplicateService {
         error: 'GPT-Image-1 fallback is disabled: OPENAI_API_KEY not configured'
       };
     }
-
-    console.log('🔧 [DEBUG] generateImageToImageWithGpt invoked', {
-      imageDataLength: imageData?.length || 0,
-      aspectRatio,
-      quality
-    });
 
     const enhancedPrompt = PromptEnhancer.enhanceForIdentityPreservation(prompt);
     const requestBody = {
@@ -231,12 +186,11 @@ export class ReplicateService {
       const parsedError = EnhancedErrorHandler.parseError(error);
       const userMessage = EnhancedErrorHandler.createUserFriendlyMessage(parsedError);
 
-      console.error('🔧 [DEBUG] GPT-Image-1 fallback exception', {
-        errorMessage: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-        parsedError,
-        userMessage
-      });
+      console.error(JSON.stringify({
+        scope: 'replicate-service',
+        message: 'gpt_fallback_exception',
+        errorType: parsedError.type,
+      }));
 
       return {
         ok: false,

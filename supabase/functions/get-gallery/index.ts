@@ -10,6 +10,10 @@ import {
   parseStorageUrl,
   type StorageObjectRef
 } from '../_shared/storageUtils.ts';
+import { isPrivateStorageBucket, toOwnerScopedClientUrl } from '../_shared/ownerScopedStorage.ts';
+import { createSafeLogger, safeErrorMessage } from '../_shared/safeLogger.ts';
+
+const logger = createSafeLogger('get-gallery');
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -68,9 +72,12 @@ const buildDisplayUrl = async (
   context: 'preview' | 'download',
   requiresWatermark: boolean
 ): Promise<string> => {
-  const publicUrl = buildPublicUrl(storageRef);
   if (!requiresWatermark) {
-    return publicUrl;
+    const scoped = await toOwnerScopedClientUrl(supabase, storageRef);
+    if (!scoped) {
+      throw new Error('signed_url_mint_failed');
+    }
+    return scoped;
   }
 
   try {
@@ -82,8 +89,8 @@ const buildDisplayUrl = async (
     );
     return bufferToDataUrl(watermarkedBuffer, contentType ?? 'image/jpeg');
   } catch (error) {
-    console.error('[get-gallery] Failed to apply watermark on-the-fly', error);
-    return publicUrl;
+    logger.error('Failed to apply watermark on-the-fly', { message: safeErrorMessage(error) });
+    throw error;
   }
 };
 
@@ -101,13 +108,13 @@ export const createSignedSource = async (
   }
   const ref = parseStoragePath(storagePath);
   if (!ref) {
-    console.warn('[get-gallery] Unable to parse source storage path for signed URL', { storagePath });
+    logger.warn('Unable to parse source storage path for signed URL');
     return { signedUrl: null, expiresAt: null };
   }
   try {
     const signed = await buildSignedUrl(supabase, ref, SOURCE_SIGNED_URL_TTL_SECONDS);
     if (!signed) {
-      console.warn('[get-gallery] Signed URL generation returned null', { storagePath });
+      logger.warn('Signed URL generation returned null');
       return { signedUrl: null, expiresAt: null };
     }
     return {
@@ -115,10 +122,7 @@ export const createSignedSource = async (
       expiresAt: Date.now() + SOURCE_SIGNED_URL_TTL_SECONDS * 1000,
     };
   } catch (error) {
-    console.error('[get-gallery] Failed to create signed URL for source', {
-      storagePath,
-      error: error instanceof Error ? error.message : error,
-    });
+    logger.error('Failed to create signed URL for source', { message: safeErrorMessage(error) });
     return { signedUrl: null, expiresAt: null };
   }
 };
@@ -189,7 +193,7 @@ serve(async (req: Request) => {
           .maybeSingle();
 
         if (itemError) {
-          console.error('[get-gallery] Single item fetch error:', itemError);
+          logger.error('Single item fetch error');
           return new Response(
             JSON.stringify({ error: 'Failed to fetch gallery item' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -218,7 +222,7 @@ serve(async (req: Request) => {
           const downloadUrl = await buildDisplayUrl(supabase, storageRef, 'download', requiresWatermark);
           const payload = {
             downloadUrl,
-            storageUrl: buildPublicUrl(storageRef),
+            storageUrl: isPrivateStorageBucket(storageRef.bucket) ? null : buildPublicUrl(storageRef),
             storagePath: `${storageRef.bucket}/${storageRef.path}`,
             requiresWatermark
           };
@@ -246,7 +250,7 @@ serve(async (req: Request) => {
             styleId: itemRow.style_id,
             styleName: itemRow.style_name,
             orientation: itemRow.orientation,
-            imageUrl: buildPublicUrl(storageRef),
+            imageUrl: isPrivateStorageBucket(storageRef.bucket) ? displayUrl : buildPublicUrl(storageRef),
             displayUrl,
             storagePath: `${storageRef.bucket}/${storageRef.path}`,
             thumbnailUrl,
@@ -315,7 +319,7 @@ serve(async (req: Request) => {
       const { data: items, error: fetchError, count } = await query;
 
       if (fetchError) {
-        console.error('[get-gallery] Fetch error:', fetchError);
+        logger.error('Fetch error');
         return new Response(
           JSON.stringify({ error: 'Failed to fetch gallery items' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -361,12 +365,20 @@ serve(async (req: Request) => {
               resolveStorageRef(item.watermarkedUrl);
 
             if (!storageRef) {
-              console.warn('[get-gallery] Skipping item with invalid storage reference', { id: item.id });
+              logger.warn('Skipping item with invalid storage reference');
               return null;
             }
 
-            const displayUrl = await buildDisplayUrl(supabase, storageRef, 'preview', requiresWatermark);
-            const imageUrl = buildPublicUrl(storageRef);
+            let displayUrl: string;
+            try {
+              displayUrl = await buildDisplayUrl(supabase, storageRef, 'preview', requiresWatermark);
+            } catch {
+              logger.warn('Skipping item that could not be presented safely');
+              return null;
+            }
+            const imageUrl = isPrivateStorageBucket(storageRef.bucket)
+              ? displayUrl
+              : buildPublicUrl(storageRef);
             const thumbnailRef = item.thumbnailStoragePath
               ? parseStoragePath(item.thumbnailStoragePath)
               : null;
@@ -435,7 +447,7 @@ serve(async (req: Request) => {
         .eq('user_id', userId);
 
       if (deleteError) {
-        console.error('[get-gallery] Delete error:', deleteError);
+        logger.error('Delete error');
         return new Response(
           JSON.stringify({ error: 'Failed to delete gallery item' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -497,7 +509,7 @@ serve(async (req: Request) => {
         .single();
 
       if (updateError) {
-        console.error('[get-gallery] Update error:', updateError);
+        logger.error('Update error');
         return new Response(
           JSON.stringify({ error: 'Failed to update gallery item' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -525,11 +537,10 @@ serve(async (req: Request) => {
     );
 
   } catch (error) {
-    console.error('[get-gallery] Unexpected error:', error);
+    logger.error('Unexpected error', { message: safeErrorMessage(error) });
     return new Response(
       JSON.stringify({
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

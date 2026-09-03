@@ -1,50 +1,103 @@
-type AnalyticsPayload = Record<string, unknown>;
+import {
+  normalizeFunnelProperties,
+  sanitizeFunnelEvent,
+  type FunnelEventRecord,
+} from '@/utils/funnelAnalytics';
 
-type PosthogLike = {
-  capture: (event: string, properties?: AnalyticsPayload) => void;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+const INGEST_ENDPOINT = SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/ingest-funnel-event` : null;
+
+const FLUSH_INTERVAL_MS = 2000;
+const MAX_BATCH = 8;
+
+const queue: FunnelEventRecord[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+let accessTokenProvider: (() => string | null | undefined) | null = null;
+
+export const registerFunnelAccessTokenProvider = (provider: () => string | null | undefined) => {
+  accessTokenProvider = provider;
 };
 
-type MixpanelLike = {
-  track: (event: string, properties?: AnalyticsPayload) => void;
-};
-
-declare global {
-  interface Window {
-    posthog?: PosthogLike;
-    mixpanel?: MixpanelLike;
-  }
-}
-
-const dispatchBrowserAnalyticsEvent = (eventName: string, payload: AnalyticsPayload) => {
+const dispatchBrowserAnalyticsEvent = (eventName: string, payload: FunnelEventRecord) => {
   if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent('wondertone-analytics', { detail: { event: eventName, payload } }));
+  window.dispatchEvent(
+    new CustomEvent('wondertone-analytics', {
+      detail: {
+        event: eventName,
+        schemaVersion: payload.schemaVersion,
+        release: payload.release,
+      },
+    })
+  );
 };
 
-export const sendAnalyticsEvent = (eventName: string, payload: AnalyticsPayload = {}) => {
-  const enrichedPayload: AnalyticsPayload = {
-    ...payload,
-    timestamp: payload.timestamp ?? Date.now(),
+const scheduleFlush = () => {
+  if (flushTimer || typeof window === 'undefined') return;
+  flushTimer = setTimeout(() => {
+    flushTimer = null;
+    void flushFunnelQueue();
+  }, FLUSH_INTERVAL_MS);
+};
+
+export const flushFunnelQueue = async (): Promise<void> => {
+  if (!INGEST_ENDPOINT || !SUPABASE_ANON_KEY || queue.length === 0) {
+    queue.length = 0;
+    return;
+  }
+
+  const batch = queue.splice(0, MAX_BATCH);
+  const headers: Record<string, string> = {
+    apikey: SUPABASE_ANON_KEY,
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${accessTokenProvider?.() || SUPABASE_ANON_KEY}`,
   };
 
-  if (typeof window !== 'undefined') {
-    const { posthog, mixpanel } = window;
-
-    if (posthog && typeof posthog.capture === 'function') {
-      posthog.capture(eventName, enrichedPayload);
-      dispatchBrowserAnalyticsEvent(eventName, enrichedPayload);
-      return;
-    }
-
-    if (mixpanel && typeof mixpanel.track === 'function') {
-      mixpanel.track(eventName, enrichedPayload);
-      dispatchBrowserAnalyticsEvent(eventName, enrichedPayload);
-      return;
-    }
+  try {
+    await fetch(INGEST_ENDPOINT, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ events: batch }),
+      keepalive: true,
+    });
+  } catch {
+    // Drop the batch rather than retrying payloads that might later include stale session state.
   }
 
-  dispatchBrowserAnalyticsEvent(eventName, enrichedPayload);
-  // Fallback logging so engineers still see the signal during development.
+  if (queue.length > 0) {
+    scheduleFlush();
+  }
+};
+
+export const sendAnalyticsEvent = (eventName: string, payload: Record<string, unknown> = {}) => {
+  const sanitized = sanitizeFunnelEvent({
+    eventName,
+    properties: normalizeFunnelProperties(payload),
+    occurredAt: typeof payload.timestamp === 'number' ? payload.timestamp : undefined,
+    source: 'client',
+  });
+
+  if (!sanitized) {
+    if (import.meta.env.DEV) {
+      console.info('[Analytics] dropped non-allowlisted event', eventName);
+    }
+    return;
+  }
+
+  dispatchBrowserAnalyticsEvent(eventName, sanitized);
+
   if (import.meta.env.DEV) {
-    console.info('[Analytics:FALLBACK]', eventName, enrichedPayload);
+    console.info('[Analytics]', sanitized.eventName, sanitized.release);
   }
+
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  queue.push(sanitized);
+  if (queue.length >= MAX_BATCH) {
+    void flushFunnelQueue();
+    return;
+  }
+  scheduleFlush();
 };

@@ -83,7 +83,7 @@ const emitStudioV2Event = <T extends StudioV2EventName>(
   const record: StudioV2Event<T> = { event, payload };
 
   if (import.meta.env.DEV) {
-    console.info('[StudioV2Analytics]', record);
+    console.info('[StudioV2Analytics]', event);
   }
 
   listeners.forEach((listener) => {

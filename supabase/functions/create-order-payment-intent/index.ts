@@ -31,9 +31,10 @@ const CANVAS_OPTIONS: CanvasConfig[] = [
 
 const ENHANCEMENT_PRICES: Record<string, number> = {
   "floating-frame": 29,
-  "living-canvas": 59.99,
   "digital-bundle": 14.99,
 };
+
+const PURCHASE_DISABLED_ENHANCEMENTS = new Set(["living-canvas"]);
 
 const corsHeaders = (origin?: string | null) => ({
   "Access-Control-Allow-Origin": origin ?? "*",
@@ -145,11 +146,17 @@ serve(async (req) => {
       });
     }
 
+    if (enhancementIds.some((id) => PURCHASE_DISABLED_ENHANCEMENTS.has(id))) {
+      return new Response(JSON.stringify({ error: "living_canvas_purchase_disabled" }), {
+        status: 400,
+        headers: { ...corsHeaders(origin), "Content-Type": "application/json" },
+      });
+    }
+
+    const purchasableEnhancementIds = enhancementIds.filter((id) => ENHANCEMENT_PRICES[id]);
     let total = canvasOption.price;
-    enhancementIds.forEach((id) => {
-      if (ENHANCEMENT_PRICES[id]) {
-        total += ENHANCEMENT_PRICES[id];
-      }
+    purchasableEnhancementIds.forEach((id) => {
+      total += ENHANCEMENT_PRICES[id];
     });
 
     const amountInCents = Math.round(total * 100);
@@ -163,10 +170,8 @@ serve(async (req) => {
         style_name: styleName ?? '',
         canvas_size_id: canvasSizeId,
         orientation,
-        enhancement_ids: enhancementIds.join(','),
-        preview_url: previewUrl ?? '',
-        contact_first_name: contact.firstName ?? '',
-        contact_last_name: contact.lastName ?? '',
+        enhancement_ids: purchasableEnhancementIds.join(','),
+        has_preview: previewUrl ? '1' : '0',
       },
       automatic_payment_methods: {
         enabled: true,
@@ -198,8 +203,11 @@ serve(async (req) => {
         headers: { ...corsHeaders(origin), "Content-Type": "application/json" },
       },
     );
-  } catch (error) {
-    console.error("[create-order-payment-intent] error", error);
+  } catch (_error) {
+    console.error(JSON.stringify({
+      scope: "create-order-payment-intent",
+      message: "payment_intent_failed",
+    }));
     return new Response(JSON.stringify({ error: "payment_intent_failed" }), {
       status: 500,
       headers: { ...corsHeaders(origin), "Content-Type": "application/json" },

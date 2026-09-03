@@ -1,6 +1,5 @@
 import type { TokenPack } from '@/data/tokenPacks';
 import TokenDrawerPackCard from '@/components/navigation/token-drawer/TokenDrawerPackCard';
-import { clsx } from 'clsx';
 
 type TokenPackRailProps = {
   packs: TokenPack[];

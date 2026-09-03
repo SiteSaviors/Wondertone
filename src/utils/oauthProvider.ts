@@ -62,7 +62,7 @@ export const handleProviderSignIn = async (
     }
     return { success: true };
   } catch (error) {
-    console.error('[OAuth] Sign-in failed', error);
+    console.error('[OAuth] Sign-in failed');
     const message =
       error instanceof Error && error.message ? error.message : DEFAULT_ERROR_COPY[provider];
     return { success: false, message };

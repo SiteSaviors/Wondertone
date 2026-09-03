@@ -11,7 +11,9 @@ export interface PreviewMetricEvent {
 export const logPreviewStage = (event: PreviewMetricEvent) => {
   const { styleId, stage, elapsedMs } = event;
   const rounded = Math.round(elapsedMs);
-  console.info(`%c[PreviewAnalytics] style=${styleId} stage=${stage} elapsed=${rounded}ms`, 'color:#a855f7');
+  if (import.meta.env.DEV) {
+    console.info(`%c[PreviewAnalytics] style=${styleId} stage=${stage} elapsed=${rounded}ms`, 'color:#a855f7');
+  }
 
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('founder-preview-analytics', { detail: event }));

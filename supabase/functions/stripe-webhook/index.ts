@@ -137,8 +137,8 @@ serve(async (req) => {
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(rawBody, signature, stripeWebhookSecret);
-  } catch (err) {
-    console.error('[stripe-webhook] Signature verification failed', err);
+  } catch (_err) {
+    console.error(JSON.stringify({ scope: 'stripe-webhook', message: 'invalid_signature' }));
     return respond({ error: 'invalid_signature' }, 400);
   }
 
@@ -218,8 +218,8 @@ serve(async (req) => {
       default:
         break;
     }
-  } catch (error) {
-    console.error('[stripe-webhook] Handler error', error);
+  } catch (_error) {
+    console.error(JSON.stringify({ scope: 'stripe-webhook', message: 'handler_error' }));
     return respond({ error: 'handler_error' }, 500);
   }
 

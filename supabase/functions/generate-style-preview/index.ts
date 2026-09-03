@@ -27,8 +27,11 @@ import {
   parseStoragePath,
   parseStorageUrl,
   buildPublicUrl,
+  buildSignedUrl,
   type StorageObjectRef
 } from '../_shared/storageUtils.ts';
+import { isPrivateStorageBucket } from '../_shared/ownerScopedStorage.ts';
+import { safeErrorMessage } from '../_shared/safeLogger.ts';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const PREVIEW_DEBUG_LOGS = Deno.env.get('WT_PREVIEW_DEBUG_LOGS') === 'true';
@@ -148,19 +151,18 @@ async function normalizeImageInput(
     const mime = contentType && contentType.length > 0 ? contentType : 'image/jpeg';
     return `data:${mime};base64,${base64}`;
   } catch (error) {
-    console.error('Failed to normalize image input', {
+    console.error(JSON.stringify({
+      message: 'Failed to normalize image input',
       bucket: storageRef.bucket,
-      path: storageRef.path,
-      message: error instanceof Error ? error.message : String(error),
-    });
+      error: safeErrorMessage(error),
+    }));
     if (PREVIEW_DEBUG_LOGS) {
-      console.log('[preview-debug] normalize_failure', {
+      console.log(JSON.stringify({
+        message: 'normalize_failure',
         requestId: context?.requestId ?? null,
-        sourceStoragePath: context?.sourceStoragePath ?? null,
         bucket: storageRef.bucket,
-        path: storageRef.path,
-        error: error instanceof Error ? error.message : String(error),
-      });
+        error: safeErrorMessage(error),
+      }));
     }
     throw error instanceof Error ? error : new Error(String(error));
   }
@@ -651,8 +653,20 @@ serve(async (req) => {
         const tierLabel = entitlementContext?.tierLabel ?? existingLog.tier ?? undefined;
         const priority = entitlementContext?.priority ?? existingLog.priority ?? 'normal';
         const requiresWatermark = entitlementContext?.requiresWatermark ?? existingLog.requires_watermark ?? true;
-        // OPUS PLAN: Return clean URL always, watermarking happens on-the-fly via separate endpoint
-        const previewUrlForResponse = existingLog.preview_url;
+        let previewUrlForResponse: string;
+        try {
+          previewUrlForResponse = await presentPreviewToClient(
+            supabase,
+            existingLog.preview_url,
+            requiresWatermark,
+            requestId
+          );
+        } catch {
+          return respond(
+            JSON.stringify(createErrorResponse('preview_presentment_failed', 'Unable to present preview', requestId, 'PREVIEW_PRESENTMENT_FAILED')),
+            500
+          );
+        }
 
         logger.info('Returning cached idempotent preview result', {
           requestId,
@@ -671,7 +685,7 @@ serve(async (req) => {
               requiresWatermark,
               remainingTokens,
               priority,
-              storageUrl: previewUrlForResponse,
+              storageUrl: requiresWatermark ? null : previewUrlForResponse,
               storagePath: existingLog.preview_url ? extractStoragePath(existingLog.preview_url) : null,
               sourceStoragePath,
               sourceDisplayUrl,
@@ -838,32 +852,25 @@ serve(async (req) => {
 
     async function recordPreviewSuccess(previewUrl: string, cacheStatus: CacheStatus, statusCode = 200): Promise<Response> {
       const tokensDebit = entitlementContext && !entitlementContext.devBypass ? 1 : 0;
-      const cleanStorageUrl = previewUrl;
       const storagePath = extractStoragePath(previewUrl);
 
-      // OPUS PLAN: Apply watermark on-the-fly before returning to client
-      let finalPreviewUrl = previewUrl;
-
-      if (effectiveWatermark && previewUrl) {
-        try {
-    const { buffer, contentType } = await loadImageBuffer(previewUrl, supabase);
-
-          // Apply watermark in-memory
-          const watermarkedBuffer = await WatermarkService.createWatermarkedImage(
-            buffer,
-            'preview', // context
-            requestId
-          );
-
-          finalPreviewUrl = bufferToDataUrl(watermarkedBuffer, contentType ?? 'image/jpeg');
-
-          logger.info('[on-the-fly] Applied watermark before returning to client', { requestId });
-        } catch (error) {
-          logger.error('[on-the-fly] Watermark application failed, returning clean URL', {
-            requestId,
-            error: error instanceof Error ? error.message : String(error)
-          });
-        }
+      let finalPreviewUrl: string;
+      try {
+        finalPreviewUrl = await presentPreviewToClient(
+          supabase,
+          previewUrl,
+          effectiveWatermark,
+          requestId
+        );
+      } catch (error) {
+        logger.error('[on-the-fly] Preview presentment failed', {
+          requestId,
+          error: safeErrorMessage(error),
+        });
+        return respond(
+          JSON.stringify(createErrorResponse('preview_presentment_failed', 'Unable to present preview', requestId, 'PREVIEW_PRESENTMENT_FAILED')),
+          500
+        );
       }
 
       if (previewLogId) {
@@ -899,7 +906,7 @@ serve(async (req) => {
         requiresWatermark: effectiveWatermark,
         remainingTokens,
         priority: entitlementContext?.priority ?? 'normal',
-        storageUrl: cleanStorageUrl,
+        storageUrl: effectiveWatermark ? null : finalPreviewUrl,
         storagePath,
         softRemaining: null,
         sourceStoragePath,
@@ -1110,9 +1117,9 @@ serve(async (req) => {
       });
 
       if (!asyncResp.ok) {
-        const errTxt = await asyncResp.text();
-        logger.error('Replicate async create failed', { requestId, status: asyncResp.status, errTxt });
-        return await recordPreviewFailure('generation_failed', `SeeDream API request failed: ${asyncResp.status} - ${errTxt}`, 503);
+        await asyncResp.text().catch(() => '');
+        logger.error('Replicate async create failed', { requestId, status: asyncResp.status });
+        return await recordPreviewFailure('generation_failed', `SeeDream API request failed: ${asyncResp.status}`, 503);
       }
 
       const asyncData = await asyncResp.json();
@@ -1304,6 +1311,40 @@ const extractStoragePath = (sourceUrl: string): string | null => {
   if (!ref) return null;
   return `${ref.bucket}/${ref.path}`;
 };
+
+const PRIVATE_SIGNED_TTL_SECONDS = 15 * 60;
+
+async function presentPreviewToClient(
+  supabase: ReturnType<typeof createClient>,
+  storedUrl: string,
+  requiresWatermark: boolean,
+  requestId: string
+): Promise<string> {
+  if (requiresWatermark) {
+    const { buffer, contentType } = await loadImageBuffer(storedUrl, supabase);
+    const watermarkedBuffer = await WatermarkService.createWatermarkedImage(
+      buffer,
+      'preview',
+      requestId
+    );
+    return bufferToDataUrl(watermarkedBuffer, contentType ?? 'image/jpeg');
+  }
+
+  const ref = parseStorageUrl(storedUrl) ?? parseStoragePath(storedUrl);
+  if (ref && isPrivateStorageBucket(ref.bucket)) {
+    const signed = await buildSignedUrl(supabase, ref, PRIVATE_SIGNED_TTL_SECONDS);
+    if (!signed) {
+      throw new Error('signed_url_mint_failed');
+    }
+    return signed;
+  }
+
+  if (ref && ref.bucket === 'preview-cache-public') {
+    return buildPublicUrl(ref);
+  }
+
+  return storedUrl;
+}
 
 // LEGACY FUNCTION REMOVED: ensureWatermarkedPreview
 // OPUS PLAN: Watermarking now happens on-the-fly via separate download/serve endpoint

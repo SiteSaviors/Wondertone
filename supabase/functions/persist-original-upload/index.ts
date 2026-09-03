@@ -238,7 +238,7 @@ serve(async (req) => {
     );
     return respond(result, determineStatus(result));
   } catch (error) {
-    console.error('[persist-original-upload] Unexpected error', error);
+    console.error(JSON.stringify({ scope: 'persist-original-upload', message: 'unexpected_error' }));
     return respond(
       { ok: false, error: 'internal_error', message: error instanceof Error ? error.message : 'Unexpected error' },
       500

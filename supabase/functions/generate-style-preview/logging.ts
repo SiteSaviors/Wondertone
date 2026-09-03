@@ -1,3 +1,5 @@
+import { redactLogValue } from '../_shared/safeLogger.ts';
+
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 const levelWeights: Record<LogLevel, number> = {
@@ -34,7 +36,7 @@ export const createRequestLogger = (requestId: string) => {
       message,
       requestId,
       timestamp: new Date().toISOString(),
-      ...meta
+      ...(redactLogValue(meta) as Record<string, unknown>)
     };
 
     if (level === 'error') {

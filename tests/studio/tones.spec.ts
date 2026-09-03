@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { STYLE_CORE_METADATA } from '@/config/styles/registryCore.generated';
 import { canGenerateStylePreview } from '@/utils/entitlementGate';
 import type { EntitlementState, SessionUser } from '@/store/useFounderStore';
-import type { StyleTone } from '@/config/styles/types';
 
 const createEntitlements = (
   tier: EntitlementState['tier'],

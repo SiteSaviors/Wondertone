@@ -14,7 +14,7 @@ import { useSessionState } from '@/store/hooks/useSessionStore';
 import { createCheckoutSession } from '@/utils/checkoutApi';
 import { trackPricingToggle } from '@/utils/telemetry';
 import { TOKEN_PACKS } from '@/data/tokenPacks';
-import { FREE_TIER, PREMIUM_TIERS, type SubscriptionTier, type TierId } from '@/data/subscriptionTiers';
+import { FREE_TIER, PREMIUM_TIERS, type TierId } from '@/data/subscriptionTiers';
 import useTokenPackCheckout from '@/hooks/useTokenPackCheckout';
 
 const buildCheckoutUrl = (type: 'subscription' | 'token_pack', status: 'success' | 'cancelled') => {

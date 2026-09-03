@@ -1,13 +1,11 @@
 import { Suspense, lazy } from 'react';
 import StyleSidebarFallback from '@/sections/studio/components/StyleSidebarFallback';
-import { useStudioEntitlementState } from '@/store/hooks/studio/useStudioEntitlementState';
 import { useStudioPreviewState } from '@/store/hooks/studio/useStudioPreviewState';
 import { useStudioOverlayContext } from '@/sections/studio/experience/context';
 
 const StyleSidebar = lazy(() => import('@/sections/studio/components/StyleSidebar'));
 
 const LeftRail = () => {
-  const { entitlements, displayRemainingTokens } = useStudioEntitlementState();
   const { currentStyle, hasCroppedImage } = useStudioPreviewState();
   const { setMobileDrawerOpen } = useStudioOverlayContext();
 

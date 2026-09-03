@@ -111,8 +111,8 @@ serve(async (req) => {
           200,
           originHeader
         );
-      } catch (cacheError) {
-        console.warn('[convert-heic] Cached signed URL retrieval failed, regenerating asset', cacheError);
+      } catch (_cacheError) {
+        console.warn(JSON.stringify({ scope: 'convert-heic', message: 'cached_signed_url_failed' }));
       }
     }
 
@@ -151,7 +151,7 @@ serve(async (req) => {
     );
   } catch (error) {
     const httpError = normalizeError(error);
-    console.error('[convert-heic] Failure', httpError, error);
+    console.error(JSON.stringify({ scope: 'convert-heic', message: 'failure' }));
     return createCorsResponse(
       JSON.stringify({ ok: false, error: httpError.code, message: httpError.message }),
       httpError.status,
@@ -225,7 +225,7 @@ async function fetchCachedRecord(hash: string): Promise<CacheRecord | null> {
     .maybeSingle();
 
   if (error) {
-    console.error('[convert-heic] Failed to fetch cached record', error);
+    console.error(JSON.stringify({ scope: 'convert-heic', message: 'cache_record_fetch_failed' }));
     return null;
   }
 
@@ -246,7 +246,7 @@ async function touchCacheRecord(hash: string, nextHitCount: number): Promise<voi
     .eq('hash', hash);
 
   if (error) {
-    console.warn('[convert-heic] Failed to update cache record', error);
+    console.warn(JSON.stringify({ scope: 'convert-heic', message: 'cache_record_update_failed' }));
   }
 }
 
@@ -364,7 +364,7 @@ async function convertHeicToJpeg(buffer: ArrayBuffer): Promise<{ jpegBytes: Uint
 
     return { jpegBytes, width, height };
   } catch (error) {
-    console.error('[convert-heic] HEIC conversion failed', error);
+    console.error(JSON.stringify({ scope: 'convert-heic', message: 'conversion_failed' }));
     throw error instanceof Error ? error : new Error(String(error));
   }
 }

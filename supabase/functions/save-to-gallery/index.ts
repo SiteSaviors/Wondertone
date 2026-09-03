@@ -8,6 +8,10 @@ import {
   downloadStorageObject,
   type StorageObjectRef
 } from '../_shared/storageUtils.ts';
+import { formatStoragePath, isPrivateStorageBucket } from '../_shared/ownerScopedStorage.ts';
+import { createSafeLogger, safeErrorMessage } from '../_shared/safeLogger.ts';
+
+const logger = createSafeLogger('save-to-gallery');
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -56,26 +60,22 @@ export const ensurePreviewLogForGallery = async (
     .maybeSingle();
 
   if (error) {
-    console.error('[save-to-gallery] Failed to load preview log', error);
+    logger.error('Failed to load preview log', { message: safeErrorMessage(error) });
     return { ok: false, status: 500, error: 'Preview log lookup failed' };
   }
 
   if (!data) {
-    console.warn('[save-to-gallery] Preview log not found', { previewLogId });
+    logger.warn('Preview log not found');
     return { ok: false, status: 404, error: 'Preview log not found' };
   }
 
   if (data.user_id !== userId) {
-    console.warn('[save-to-gallery] Preview log ownership mismatch', {
-      previewLogId,
-      previewLogUser: data.user_id,
-      userId,
-    });
+    logger.warn('Preview log ownership mismatch');
     return { ok: false, status: 403, error: 'Preview log ownership mismatch' };
   }
 
   if (!data.source_storage_path) {
-    console.error('[save-to-gallery] Preview log missing source metadata', { previewLogId });
+    logger.error('Preview log missing source metadata');
     return { ok: false, status: 500, error: 'Preview log missing source metadata' };
   }
 
@@ -118,7 +118,7 @@ const generateThumbnail = async (
     const publicUrl = buildPublicUrl({ bucket: THUMBNAIL_BUCKET, path: objectPath });
     return { storagePath, publicUrl };
   } catch (error) {
-    console.error('[save-to-gallery] Thumbnail generation failed', error);
+    logger.error('Thumbnail generation failed', { message: safeErrorMessage(error) });
     return null;
   }
 };
@@ -141,7 +141,7 @@ serve(async (req: Request) => {
     const { previewLogId, styleId, styleName, orientation, storagePath } = body;
 
     if (!previewLogId) {
-      console.warn('[save-to-gallery] Missing previewLogId');
+      logger.warn('Missing previewLogId');
       return new Response(
         JSON.stringify({ error: 'previewLogId is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -219,12 +219,12 @@ serve(async (req: Request) => {
       );
     }
     const previewLog = previewLogCheck.record;
-    console.info('[save-to-gallery] Preview log validated', {
-      previewLogId,
-      hasSource: Boolean(previewLog.source_storage_path),
-    });
+    logger.info('Preview log validated', { hasSource: Boolean(previewLog.source_storage_path) });
 
-    const publicUrl = buildPublicUrl(storageRef);
+    const publicUrl = isPrivateStorageBucket(storageRef.bucket)
+      ? formatStoragePath(storageRef)
+      : buildPublicUrl(storageRef);
+    const cleanUrl = isPrivateStorageBucket(storageRef.bucket) ? formatStoragePath(storageRef) : null;
 
     // Check if this preview is already saved
     const { data: existing, error: checkError } = await supabase
@@ -238,7 +238,7 @@ serve(async (req: Request) => {
       .maybeSingle();
 
     if (checkError) {
-      console.error('[save-to-gallery] Error checking existing:', checkError);
+      logger.error('Error checking existing');
       return new Response(
         JSON.stringify({ error: 'Failed to check existing gallery item' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -273,7 +273,7 @@ serve(async (req: Request) => {
         style_name: styleName,
         orientation,
         watermarked_url: publicUrl,
-        clean_url: publicUrl,
+        clean_url: cleanUrl,
         thumbnail_storage_path: thumbnailResult?.storagePath ?? null,
         is_favorited: false,
         is_deleted: false,
@@ -283,9 +283,9 @@ serve(async (req: Request) => {
       .single();
 
     if (insertError) {
-      console.error('[save-to-gallery] Insert error:', insertError);
+      logger.error('Insert error');
       return new Response(
-        JSON.stringify({ error: 'Failed to save to gallery', details: insertError.message }),
+        JSON.stringify({ error: 'Failed to save to gallery' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -310,11 +310,10 @@ serve(async (req: Request) => {
     );
 
   } catch (error) {
-    console.error('[save-to-gallery] Unexpected error:', error);
+    logger.error('Unexpected error', { message: safeErrorMessage(error) });
     return new Response(
       JSON.stringify({
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

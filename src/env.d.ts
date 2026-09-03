@@ -12,6 +12,9 @@ interface ImportMetaEnv {
   readonly VITE_AUTH_GOOGLE_ENABLED?: string;
   readonly VITE_AUTH_MICROSOFT_ENABLED?: string;
   readonly VITE_AUTH_FACEBOOK_ENABLED?: string;
+  readonly VITE_RELEASE_SHA?: string;
+  readonly VITE_BUILD_ID?: string;
+  readonly VITE_STRIPE_PUBLISHABLE_KEY?: string;
 }
 
 interface ImportMeta {

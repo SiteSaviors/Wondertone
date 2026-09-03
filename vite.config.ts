@@ -1,11 +1,40 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
 import { componentTagger } from 'lovable-tagger';
 import { visualizer } from 'rollup-plugin-visualizer';
 
+const resolveReleaseSha = (): string => {
+  const fromEnv =
+    process.env.VITE_RELEASE_SHA ||
+    process.env.GITHUB_SHA ||
+    process.env.VERCEL_GIT_COMMIT_SHA;
+  if (fromEnv && fromEnv.trim().length > 0) {
+    return fromEnv.trim();
+  }
+  try {
+    return execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return 'unknown';
+  }
+};
+
+const resolveBuildId = (releaseSha: string): string => {
+  const fromEnv =
+    process.env.VITE_BUILD_ID ||
+    process.env.GITHUB_RUN_ID ||
+    process.env.VERCEL_DEPLOYMENT_ID;
+  if (fromEnv && fromEnv.trim().length > 0) {
+    return fromEnv.trim();
+  }
+  return releaseSha;
+};
+
 export default defineConfig(({ mode }) => {
   const enableVerboseSourcemaps = process.env.VERBOSE_SOURCEMAPS === 'true';
+  const releaseSha = resolveReleaseSha();
+  const buildId = resolveBuildId(releaseSha);
 
   return {
   server: {
@@ -27,6 +56,10 @@ export default defineConfig(({ mode }) => {
         ]
       : []),
   ],
+  define: {
+    'import.meta.env.VITE_RELEASE_SHA': JSON.stringify(releaseSha),
+    'import.meta.env.VITE_BUILD_ID': JSON.stringify(buildId),
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

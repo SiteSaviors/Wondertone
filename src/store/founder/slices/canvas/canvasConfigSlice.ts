@@ -3,6 +3,7 @@ import type { CanvasSize, Enhancement, FounderState } from '@/store/founder/stor
 import { createCanvasSelectionSnapshot } from '@/utils/canvas/selectionSnapshot';
 import { getCanvasSizeOption, getDefaultSizeForOrientation } from '@/utils/canvasSizes';
 import { selectCurrentStyle } from '@/store/useFounderStoreHelpers';
+import { isPurchaseDisabledEnhancement } from '@/config/commerceGuards';
 
 export type CanvasConfigSlice = Pick<
   FounderState,
@@ -44,22 +45,25 @@ export const createCanvasConfigSlice = (
     get().persistCanvasSelection();
   },
   toggleEnhancement: (id) => {
+    if (isPurchaseDisabledEnhancement(id)) {
+      return;
+    }
     set((state) => {
       const enhancements = state.enhancements.map((item) =>
         item.id === id ? { ...item, enabled: !item.enabled } : item
       );
-      const livingCanvasEnabled = enhancements.find((item) => item.id === 'living-canvas')?.enabled ?? false;
       return {
         enhancements,
-        livingCanvasModalOpen: livingCanvasEnabled ? false : state.livingCanvasModalOpen,
       };
     });
     get().persistCanvasSelection();
   },
   setEnhancementEnabled: (id, enabled) => {
+    if (isPurchaseDisabledEnhancement(id)) {
+      return;
+    }
     set((state) => ({
       enhancements: state.enhancements.map((item) => (item.id === id ? { ...item, enabled } : item)),
-      livingCanvasModalOpen: id === 'living-canvas' && enabled ? false : state.livingCanvasModalOpen,
     }));
     get().persistCanvasSelection();
   },
@@ -86,7 +90,9 @@ export const createCanvasConfigSlice = (
     const defaultSize = getDefaultSizeForOrientation(state.orientation);
     const nextSize = selection?.size ?? defaultSize;
     const nextFrame = selection?.frame ?? 'none';
-    const enabledIds = new Set(selection?.enhancements ?? []);
+    const enabledIds = new Set(
+      (selection?.enhancements ?? []).filter((itemId) => !isPurchaseDisabledEnhancement(itemId))
+    );
 
     const enhancements = state.enhancements.map((item) => ({
       ...item,

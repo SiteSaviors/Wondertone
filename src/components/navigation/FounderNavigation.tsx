@@ -108,8 +108,8 @@ const FounderNavigation = () => {
           returnUrl: window.location.href,
         });
         window.location.href = url;
-      } catch (error) {
-        console.error('[FounderNavigation] billing portal error', error);
+      } catch (_error) {
+        console.error('[FounderNavigation] billing portal error');
         alert('Unable to open billing portal at the moment. Please try again.');
       } finally {
         setPortalIntent(null);

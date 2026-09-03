@@ -90,7 +90,7 @@ export async function persistOriginalUpload(params: PersistOriginalUploadParams)
 
     return json;
   } catch (error) {
-    console.error('[sourceUploadApi] Failed to persist original upload', error);
+    console.error('[sourceUploadApi] Failed to persist original upload');
     return {
       ok: false,
       error: 'network_error',

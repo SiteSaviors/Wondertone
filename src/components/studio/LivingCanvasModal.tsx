@@ -5,7 +5,7 @@ import { useCanvasConfigActions, useLivingCanvasStatus } from '@/store/hooks/use
 
 const LivingCanvasModal = () => {
   const { livingCanvasModalOpen, livingCanvasEnabled } = useLivingCanvasStatus();
-  const { setLivingCanvasModalOpen, setEnhancementEnabled } = useCanvasConfigActions();
+  const { setLivingCanvasModalOpen } = useCanvasConfigActions();
   const open = livingCanvasModalOpen && !livingCanvasEnabled;
 
   return (
@@ -43,17 +43,11 @@ const LivingCanvasModal = () => {
         </li>
       </ul>
       <div className="flex flex-col md:flex-row gap-3">
-        <Button
-          className="flex-1"
-          onClick={() => {
-            setEnhancementEnabled('living-canvas', true);
-            setLivingCanvasModalOpen(false);
-          }}
-        >
-          Add Living Canvas ($59.99)
+        <Button className="flex-1" disabled>
+          Coming soon — purchase disabled
         </Button>
         <Button variant="ghost" className="flex-1" onClick={() => setLivingCanvasModalOpen(false)}>
-          Maybe Later
+          Close
         </Button>
       </div>
     </Modal>

@@ -1,6 +1,8 @@
+import { sendAnalyticsEvent } from '@/utils/analyticsClient';
+
 export type StepOneEvent =
   | { type: 'substep'; value: 'upload' | 'crop' | 'style-selection' | 'complete' }
-  | { type: 'preview'; styleId: string; status: 'generating' | 'ready' | 'error' }
+  | { type: 'preview'; styleId: string; status: 'generating' | 'ready' | 'error' | 'start' | 'complete' | string }
   | { type: 'cta'; value: 'continue-to-studio' }
   | { type: 'upload_started' }
   | { type: 'upload_success'; value: string }
@@ -10,9 +12,21 @@ export type StepOneEvent =
   | { type: 'tone_upgrade_prompt'; styleId?: string; tone?: string; requiredTier?: string | null }
   | { type: 'conversion'; status: 'start' | 'success' | 'error'; cacheHit?: boolean };
 
+const STEP_ONE_EVENT_NAME: Record<StepOneEvent['type'], string> = {
+  substep: 'step_one_substep',
+  preview: 'step_one_preview',
+  cta: 'step_one_cta',
+  upload_started: 'step_one_upload_started',
+  upload_success: 'step_one_upload_success',
+  tone_section_view: 'tone_section_view',
+  tone_style_select: 'tone_style_select',
+  tone_style_locked: 'tone_style_locked',
+  tone_upgrade_prompt: 'tone_upgrade_prompt',
+  conversion: 'conversion',
+};
+
 export function emitStepOneEvent(event: StepOneEvent) {
-  // Placeholder adapter: log to console now, replace with analytics pipeline later.
-  console.log('[FounderTelemetry]', { ...event, timestamp: Date.now() });
+  sendAnalyticsEvent(STEP_ONE_EVENT_NAME[event.type], { ...event });
 }
 
 export type AuthProviderMethod = 'google' | 'microsoft' | 'facebook' | 'email';
@@ -23,10 +37,9 @@ export type AuthGateEvent =
   | { type: 'auth_modal_abandoned'; reason: 'dismiss' | 'close' };
 
 export function emitAuthGateEvent(event: AuthGateEvent) {
-  console.log('[AuthGateTelemetry]', event);
+  sendAnalyticsEvent(event.type, { ...event });
 }
 
-// Phase 2: Progressive Disclosure Analytics Events
 export type ProgressiveDisclosureEvent =
   | { type: 'cta_download_click'; userTier: string; isPremium: boolean; timestamp: number }
   | { type: 'cta_canvas_click'; userTier: string; timestamp: number }
@@ -52,104 +65,46 @@ export type MembershipSurfaceEvent = {
 };
 
 export function trackTokenDrawerOpened(userTier: string, remainingTokens: number | null) {
-  const event: MembershipSurfaceEvent = {
-    type: 'token_drawer_opened',
-    userTier,
-    remainingTokens,
-    timestamp: Date.now(),
-  };
-  console.log('[MembershipSurface]', event);
+  sendAnalyticsEvent('token_drawer_opened', { userTier, remainingTokens });
 }
 
 export function trackDownloadCTAClick(userTier: string, isPremium: boolean) {
-  const event: ProgressiveDisclosureEvent = {
-    type: 'cta_download_click',
-    userTier,
-    isPremium,
-    timestamp: Date.now(),
-  };
-  console.log('[ProgressiveDisclosure]', event);
-  // TODO: Send to analytics pipeline (PostHog, Mixpanel, etc.)
+  sendAnalyticsEvent('cta_download_click', { userTier, isPremium });
 }
 
 export function trackCanvasCTAClick(userTier: string) {
-  const event: ProgressiveDisclosureEvent = {
-    type: 'cta_canvas_click',
-    userTier,
-    timestamp: Date.now(),
-  };
-  console.log('[ProgressiveDisclosure]', event);
+  sendAnalyticsEvent('cta_canvas_click', { userTier });
 }
 
 export function trackCanvasPanelOpen(userTier: string) {
-  const event: ProgressiveDisclosureEvent = {
-    type: 'canvas_panel_open',
-    userTier,
-    timestamp: Date.now(),
-  };
-  console.log('[ProgressiveDisclosure]', event);
+  sendAnalyticsEvent('canvas_panel_open', { userTier });
 }
 
 export function trackDownloadSuccess(userTier: string, styleId: string) {
-  const event: ProgressiveDisclosureEvent = {
-    type: 'download_success',
-    userTier,
-    styleId,
-    timestamp: Date.now(),
-  };
-  console.log('[ProgressiveDisclosure]', event);
+  sendAnalyticsEvent('download_success', { userTier, styleId });
 }
 
 export function trackOrderStarted(userTier: string, orderTotal: number, hasEnhancements: boolean) {
-  const event: ProgressiveDisclosureEvent = {
-    type: 'order_started',
-    userTier,
-    orderTotal,
-    hasEnhancements,
-    timestamp: Date.now(),
-  };
-  console.log('[ProgressiveDisclosure]', event);
+  sendAnalyticsEvent('order_started', { userTier, orderTotal, hasEnhancements });
 }
 
 export function trackOrderCompleted(
-  userTier: string,
-  orderTotal: number,
-  hasEnhancements: boolean,
-  shippingCountry?: string | null
+  _userTier: string,
+  _orderTotal: number,
+  _hasEnhancements: boolean,
+  _shippingCountry?: string | null
 ) {
-  const event: ProgressiveDisclosureEvent = {
-    type: 'order_completed',
-    userTier,
-    orderTotal,
-    hasEnhancements,
-    shippingCountry,
-    timestamp: Date.now(),
-  };
-  console.log('[ProgressiveDisclosure]', event);
+  // Intentionally not persisted. Order completion is server-authoritative.
 }
 
 export function trackCheckoutStepView(step: string, userTier: string) {
-  const event: ProgressiveDisclosureEvent = {
-    type: 'checkout_step_view',
-    step,
-    userTier,
-    timestamp: Date.now(),
-  };
-  console.log('[ProgressiveDisclosure]', event);
+  sendAnalyticsEvent('checkout_step_view', { step, userTier });
 }
 
 export function trackCheckoutExit(action: 'stay' | 'leave', step: string, reason: string) {
-  const event: ProgressiveDisclosureEvent = {
-    type: 'checkout_exit',
-    action,
-    step,
-    reason,
-    timestamp: Date.now(),
-  };
-  console.log('[ProgressiveDisclosure]', event);
+  sendAnalyticsEvent('checkout_exit', { action, step, reason });
 }
 
-// Checkout Recommendation Analytics
 export type CheckoutRecommendationEvent =
   | {
       type: 'recommendation_shown';
@@ -173,16 +128,7 @@ export function trackCheckoutRecommendationShown(
   isRecommended: boolean,
   isMostPopular: boolean
 ) {
-  const event: CheckoutRecommendationEvent = {
-    type: 'recommendation_shown',
-    sizeId,
-    orientation,
-    isRecommended,
-    isMostPopular,
-    timestamp: Date.now(),
-  };
-  console.log('[CheckoutRecommendation]', event);
-  // TODO: Send to analytics pipeline (PostHog, Mixpanel, etc.)
+  sendAnalyticsEvent('recommendation_shown', { sizeId, orientation, isRecommended, isMostPopular });
 }
 
 export function trackCheckoutRecommendationSelected(
@@ -190,19 +136,11 @@ export function trackCheckoutRecommendationSelected(
   wasRecommended: boolean,
   wasMostPopular: boolean
 ) {
-  const event: CheckoutRecommendationEvent = {
-    type: 'recommendation_selected',
-    sizeId,
-    wasRecommended,
-    wasMostPopular,
-    timestamp: Date.now(),
-  };
-  console.log('[CheckoutRecommendation]', event);
-  // TODO: Send to analytics pipeline
+  sendAnalyticsEvent('recommendation_selected', { sizeId, wasRecommended, wasMostPopular });
 }
 
-export function trackRuntimeMetric(name: string, payload?: Record<string, unknown>) {
-  console.log('[RuntimeMetric]', { name, payload, timestamp: Date.now() });
+export function trackRuntimeMetric(_name: string, _payload?: Record<string, unknown>) {
+  // Runtime dumps are not allowlisted funnel events.
 }
 
 export type SocialProofEvent =
@@ -234,15 +172,16 @@ export type SocialProofEvent =
     };
 
 export function trackSocialProofEvent(event: SocialProofEvent) {
-  console.log('[SocialProof]', { ...event, timestamp: Date.now() });
+  const { type, ...rest } = event;
+  sendAnalyticsEvent(type, rest as Record<string, unknown>);
 }
 
 type PricingMode = 'subscription' | 'payg';
 
 export function trackPricingToggle(mode: PricingMode) {
-  console.log('[PricingToggle]', { mode, timestamp: Date.now() });
+  sendAnalyticsEvent('pricing_toggle', { mode });
 }
 
 export function trackTokenPackCheckoutStart(payload: { packId: string; tokens: number; priceCents: number }) {
-  console.log('[TokenPackCheckout]', { ...payload, timestamp: Date.now() });
+  sendAnalyticsEvent('token_pack_checkout_start', payload);
 }
