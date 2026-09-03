@@ -21,30 +21,19 @@ const RELEASE_GATE_PATHS = [
   '/terms',
 ];
 
-const PROTECTED_PREFIXES = ['/api/', '/functions/', '/assets/', '/Auth-Logos/'];
+const EXCLUDED_PREFIXES = ['api/', 'functions/', 'assets/', 'Auth-Logos/'];
 
 const readVercelConfig = (): VercelConfig =>
   JSON.parse(readFileSync(path.resolve(process.cwd(), 'vercel.json'), 'utf8')) as VercelConfig;
 
-const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-const sourceToRegex = (source: string): RegExp => {
-  if (source.startsWith('/((?!') && source.endsWith('.*)')) {
-    const lookahead = source.slice('/(('.length, source.lastIndexOf('.*)'))
-      .replace(/\//g, '\\/');
-    return new RegExp(`^\\/${lookahead}.*$`);
-  }
-
+const matchesExplicitSource = (source: string, pathname: string): boolean => {
+  if (source === pathname) return true;
   if (source.endsWith('/:path*')) {
-    const prefix = escapeRegExp(source.slice(0, -'/:path*'.length));
-    return new RegExp(`^${prefix}(?:\\/.*)?$`);
+    const prefix = source.slice(0, -'/:path*'.length);
+    return pathname === prefix || pathname.startsWith(`${prefix}/`);
   }
-
-  return new RegExp(`^${escapeRegExp(source)}$`);
+  return false;
 };
-
-const rewriteMatchesPath = (source: string, pathname: string): boolean =>
-  sourceToRegex(source).test(pathname);
 
 describe('Vercel SPA fallback (release gate)', () => {
   it('is valid JSON and sends client routes to index.html', () => {
@@ -55,18 +44,20 @@ describe('Vercel SPA fallback (release gate)', () => {
   });
 
   it('covers the live 404 client routes without swallowing API or assets', () => {
-    const config = readVercelConfig();
-    const rewrites = config.rewrites ?? [];
-    const sources = rewrites.map((rule) => rule.source).join('\n');
+    const rewrites = readVercelConfig().rewrites ?? [];
+    const catchAll = rewrites.find((rule) => rule.source.includes('(?!'));
 
-    expect(sources).toMatch(/api\//);
-    expect(sources).toMatch(/functions\//);
-    expect(sources).toMatch(/assets\//);
-    expect(sources).toMatch(/\(\?\!/);
+    expect(catchAll, 'catch-all rewrite with a negative lookahead is required').toBeDefined();
+    expect(catchAll?.destination).toBe('/index.html');
+    for (const prefix of EXCLUDED_PREFIXES) {
+      expect(catchAll?.source).toContain(prefix);
+    }
 
     for (const pathname of RELEASE_GATE_PATHS) {
       const matched = rewrites.some(
-        (rule) => rule.destination === '/index.html' && rewriteMatchesPath(rule.source, pathname)
+        (rule) =>
+          rule.destination === '/index.html' &&
+          (matchesExplicitSource(rule.source, pathname) || Boolean(catchAll && rule.source === catchAll.source))
       );
       expect(matched, `${pathname} must rewrite to index.html`).toBe(true);
     }
@@ -77,16 +68,13 @@ describe('Vercel SPA fallback (release gate)', () => {
       '/assets/index.js',
       '/Auth-Logos/Google-logo.svg',
     ]) {
-      const matched = rewrites.some(
-        (rule) => rule.destination === '/index.html' && rewriteMatchesPath(rule.source, pathname)
+      const matchedExplicit = rewrites.some(
+        (rule) => rule.destination === '/index.html' && matchesExplicitSource(rule.source, pathname)
       );
-      expect(matched, `${pathname} must not be rewritten to index.html`).toBe(false);
-    }
-
-    for (const prefix of PROTECTED_PREFIXES) {
-      expect(
-        rewrites.some((rule) => rule.source === prefix || rule.source === `${prefix}:path*`)
-      ).toBe(false);
+      expect(matchedExplicit, `${pathname} must not have an explicit SPA rewrite`).toBe(false);
+      const rest = pathname.replace(/^\//, '');
+      const excludedByLookahead = EXCLUDED_PREFIXES.some((prefix) => rest.startsWith(prefix));
+      expect(excludedByLookahead, `${pathname} must be excluded by the catch-all lookahead`).toBe(true);
     }
   });
 });
