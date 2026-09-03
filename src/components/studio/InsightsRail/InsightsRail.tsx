@@ -7,7 +7,6 @@ import StoryTeaser from './StoryTeaser';
 const DiscoverGridLazy = lazy(() => import('./DiscoverGrid'));
 const PaletteModuleLazy = lazy(() => import('./PaletteModule'));
 const CuratedStylesModuleLazy = lazy(() => import('./CuratedStylesModule'));
-const SecondaryCanvasCtaLazy = lazy(() => import('./SecondaryCanvasCta'));
 const ShareBadgesLazy = lazy(() => import('./ShareBadges'));
 const OriginalComparisonModuleLazy = lazy(() => import('./OriginalComparisonModule'));
 import { getNarrative, getPalette } from '@/utils/storyLayer/copy';
@@ -148,8 +147,8 @@ const InsightsRail = ({
   previewReady,
   previewUrl,
   orientation,
-  onRequestCanvas,
-  onToast,
+  onRequestCanvas: _onRequestCanvas,
+  onToast: _onToast,
   onGatePrompt,
   className,
 }: InsightsRailProps) => {
@@ -208,11 +207,6 @@ const InsightsRail = ({
               entitlements={entitlements}
               onGatePrompt={onGatePrompt}
             />
-            <SecondaryCanvasCtaLazy
-              styleId={highlightedStyle.id}
-              onRequestCanvas={onRequestCanvas}
-              onToast={onToast}
-            />
             <ShareBadgesLazy previewReady={previewReady} previewUrl={previewUrl} />
           </Suspense>
         ) : (
@@ -241,11 +235,6 @@ const InsightsRail = ({
                 currentStyle={highlightedStyle}
                 entitlements={entitlements}
                 onGatePrompt={onGatePrompt}
-              />
-              <SecondaryCanvasCtaLazy
-                styleId={highlightedStyle.id}
-                onRequestCanvas={onRequestCanvas}
-                onToast={onToast}
               />
               <ShareBadgesLazy previewReady={previewReady} previewUrl={previewUrl} />
             </Suspense>

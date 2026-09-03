@@ -147,16 +147,13 @@ const ProductHeroSection = () => {
       {/* Background Texture */}
       <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/nice-snow.png')]" />
 
-      <Section className="relative pt-32 pb-20">
+      <Section className="relative !pt-36 !pb-20 lg:!pt-40">
         <div className="mx-auto max-w-6xl space-y-6">
 
           <div className="text-center text-white max-w-5xl mx-auto px-4">
             <div className="space-y-4">
-              <h1 className="font-poppins text-4xl sm:text-5xl md:text-7xl font-bold leading-[1.15] tracking-[-0.04em] drop-shadow-2xl">
-                The photo you love,{' '}
-                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
-                  as art.
-                </span>
+              <h1 className="font-poppins text-4xl sm:text-5xl md:text-7xl font-bold leading-[1.15] tracking-[-0.04em] text-white drop-shadow-2xl">
+                Turn Your Memories Into Museum Quality Art
               </h1>
               <p className="font-poppins text-base sm:text-lg md:text-xl text-white">
                 One upload. One style. No prompts.
@@ -182,7 +179,7 @@ const ProductHeroSection = () => {
                     originalImage={previousCanvas.originalImage}
                     styleName={previousCanvas.name}
                     styleTagline={previousCanvas.tagline}
-                    generationDuration={2500}
+                    animateGeneration={false}
                   />
                 </div>
               ) : null}
@@ -193,7 +190,7 @@ const ProductHeroSection = () => {
                   originalImage={currentCanvas.originalImage}
                   styleName={currentCanvas.name}
                   styleTagline={currentCanvas.tagline}
-                  generationDuration={2500}
+                  animateGeneration={false}
                 />
               </div>
             </div>

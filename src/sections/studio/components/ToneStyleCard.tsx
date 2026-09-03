@@ -31,6 +31,7 @@ export default function ToneStyleCard({
 }: ToneStyleCardProps) {
   const { option, gate, isSelected, isFavorite, metadataTone, readiness } = styleEntry;
   const { rules } = useProductSurface();
+  const [thumbnailMissing, setThumbnailMissing] = useState(!option.thumbnail);
   const isStyleLocked = !gate.allowed;
   const [isAnimating, setIsAnimating] = useState(false);
   const isHero = layout === 'hero';
@@ -239,6 +240,10 @@ export default function ToneStyleCard({
         }
       : {};
 
+  if (thumbnailMissing) {
+    return null;
+  }
+
   const hoverEnabled = !previewLocked && !isStyleLocked && !isSelected;
   const cardClassName = clsx(
     'tone-style-card group relative w-full rounded-xl overflow-hidden transition-colors duration-200',
@@ -322,12 +327,13 @@ export default function ToneStyleCard({
             height={isHero ? 112 : 64}
             loading="lazy"
             decoding="async"
+            onError={() => setThumbnailMissing(true)}
             className={clsx(
               'h-full w-full object-cover transition-transform duration-200',
               isStyleLocked && 'opacity-60',
               !isStyleLocked && !previewLocked && 'group-hover:scale-105'
             )}
-            style={{ aspectRatio: '1', contentVisibility: 'auto' }}
+            style={{ aspectRatio: '1' }}
           />
         </picture>
 

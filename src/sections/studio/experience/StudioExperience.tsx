@@ -25,7 +25,7 @@ const StudioExperience = ({ checkoutNotice, onDismissCheckoutNotice }: StudioExp
   const { renderFeedback } = useStudioExperienceContext();
   const { currentStyle, hasCroppedImage } = useStudioPreviewState();
   const { entitlements } = useStudioEntitlementState();
-  const { openCanvasModal, hydrateEntitlements } = useStudioActions();
+  const { hydrateEntitlements } = useStudioActions();
   const { rules } = useProductSurface();
   const { requestOrientationChange, orientationChanging } = useOrientationBridge();
 
@@ -53,14 +53,10 @@ const StudioExperience = ({ checkoutNotice, onDismissCheckoutNotice }: StudioExp
   }, []);
 
   const handleOpenCanvas = useCallback(
-    (source: 'center' | 'rail') => {
-      if (!hasCroppedImage) {
-        return;
-      }
-
-      openCanvasModal(source);
+    (_source: 'center' | 'rail') => {
+      // Rail is visible. Canvas and Living Canvas are not a live offer.
     },
-    [hasCroppedImage, openCanvasModal]
+    []
   );
 
   const overlayContextValue = useMemo(
@@ -95,7 +91,7 @@ const StudioExperience = ({ checkoutNotice, onDismissCheckoutNotice }: StudioExp
   return (
     <StudioOverlayProvider value={overlayContextValue}>
       <section
-        className="relative min-h-screen bg-slate-900"
+        className={hasCroppedImage ? 'relative min-h-screen bg-slate-900' : 'relative bg-slate-900'}
         data-studio-section
         data-founder-anchor="studio"
         id="studio"
@@ -129,7 +125,7 @@ const StudioExperience = ({ checkoutNotice, onDismissCheckoutNotice }: StudioExp
           )}
         </div>
 
-        <StudioOverlays onRequestCanvas={handleOpenCanvas} />
+        <StudioOverlays />
 
         {renderFeedback()}
       </section>

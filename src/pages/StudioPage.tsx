@@ -7,7 +7,6 @@ import { useStyleCatalogActions, useStyleCatalogState } from '@/store/hooks/useS
 import InstantBreadthStrip from '@/sections/studio/InstantBreadthStrip';
 import StyleInspirationSection from '@/sections/studio/StyleInspirationSection';
 import SocialProofSection from '@/sections/studio/SocialProofSection';
-import CanvasQualityStrip from '@/sections/studio/CanvasQualityStrip';
 import { ProductSurfaceProvider, useProductSurface } from '@/providers/ProductSurfaceProvider';
 import { trackVisit } from '@/utils/telemetry';
 
@@ -36,7 +35,6 @@ const FirstPathFulfillmentModules = () => {
   return (
     <>
       {!rules.hideSocialProof && <SocialProofSection />}
-      {!rules.hideCanvasRail && <CanvasQualityStrip />}
     </>
   );
 };

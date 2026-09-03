@@ -57,7 +57,7 @@ const selectInstantBreadthItems = (styles: StyleOption[]): InstantBreadthItem[] 
       thumbnailWebp: entry.thumbnailWebp ?? null,
       thumbnailAvif: entry.thumbnailAvif ?? null,
     };
-  }).filter((item): item is InstantBreadthItem => Boolean(item));
+  }).filter((item): item is InstantBreadthItem => Boolean(item?.thumbnail));
 };
 
 const MARQUEE_DURATION_MS = 40000;
@@ -68,13 +68,73 @@ const normalizeOffset = (value: number, segment: number) => {
   return remainder < 0 ? remainder + segment : remainder;
 };
 
+const InstantBreadthCard = ({
+  item,
+  isClone,
+  onUnavailable,
+}: {
+  item: InstantBreadthItem;
+  isClone: boolean;
+  onUnavailable: (id: string) => void;
+}) => {
+  const [missing, setMissing] = useState(!item.thumbnail);
+  if (missing) return null;
+
+  return (
+    <article
+      className="group flex w-[160px] flex-shrink-0 flex-col sm:w-[200px] md:w-[220px] lg:w-[240px]"
+      role="listitem"
+      aria-hidden={isClone ? 'true' : undefined}
+    >
+      <div className="relative overflow-hidden rounded-3xl bg-slate-900 aspect-square shadow-[0_4px_16px_rgba(0,0,0,0.3)] transition-all duration-300 group-hover:shadow-[0_12px_32px_rgba(0,0,0,0.5)] group-hover:scale-[1.03]">
+        <picture>
+          {item.thumbnailAvif ? (
+            <source srcSet={item.thumbnailAvif} type="image/avif" />
+          ) : null}
+          {item.thumbnailWebp ? (
+            <source srcSet={item.thumbnailWebp} type="image/webp" />
+          ) : null}
+          <img
+            src={item.thumbnail}
+            alt={`${item.name} thumbnail`}
+            loading="lazy"
+            onError={() => {
+              setMissing(true);
+              onUnavailable(item.id);
+            }}
+            className="h-full w-full object-cover"
+          />
+        </picture>
+        <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-md px-3 py-2.5 border-t border-white/10">
+          <p className="text-xs font-bold text-white uppercase tracking-[0.15em] sm:text-sm">
+            {item.name}
+          </p>
+        </div>
+      </div>
+    </article>
+  );
+};
+
 const InstantBreadthStrip = () => {
   const { styles } = useStyleCatalogState();
   const openStockLibrary = useFounderStore((state) => state.openStockLibrary);
   const { rules } = useProductSurface();
   const prefersReducedMotion = usePrefersReducedMotion();
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
 
-  const curatedItems = useMemo(() => selectInstantBreadthItems(styles), [styles]);
+  const curatedItems = useMemo(
+    () => selectInstantBreadthItems(styles).filter((item) => item.thumbnail && !hiddenIds.has(item.id)),
+    [styles, hiddenIds]
+  );
+
+  const hideItem = useCallback((id: string) => {
+    setHiddenIds((current) => {
+      if (current.has(id)) return current;
+      const next = new Set(current);
+      next.add(id);
+      return next;
+    });
+  }, []);
   const [isInteractive, setIsInteractive] = useState(false);
   const pauseReasonsRef = useRef<Set<string>>(new Set());
   const [isPaused, setIsPaused] = useState(true);
@@ -311,7 +371,7 @@ const InstantBreadthStrip = () => {
             One photo. Many styles. See the look first.
           </h2>
           <p className="font-poppins max-w-4xl text-base text-white/80 sm:text-lg">
-            Upload a picture. Pick a look. Preview is display-only.
+            Upload a picture. Pick a look.
           </p>
           <p className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-white/60 sm:text-base">
             <span className="inline-flex items-center gap-2">
@@ -380,39 +440,12 @@ const InstantBreadthStrip = () => {
               {marqueeItems.map((item, index) => {
                 const isClone = shouldDuplicate && index >= curatedItems.length;
                 return (
-                  <article
+                  <InstantBreadthCard
                     key={`${item.id}-${index}`}
-                    className="group flex w-[160px] flex-shrink-0 flex-col sm:w-[200px] md:w-[220px] lg:w-[240px]"
-                    role="listitem"
-                    aria-hidden={isClone ? 'true' : undefined}
-                  >
-                    {/* Gold gradient border wrapper */}
-                    <div className="relative p-[2px] rounded-3xl bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-400">
-                      <div className="relative overflow-hidden rounded-3xl bg-white/5 transition-all duration-300 shadow-[0_4px_16px_rgba(0,0,0,0.3)] group-hover:shadow-[0_12px_32px_rgba(0,0,0,0.5)] group-hover:scale-[1.03]">
-                        <picture>
-                          {item.thumbnailAvif ? (
-                            <source srcSet={item.thumbnailAvif} type="image/avif" />
-                          ) : null}
-                          {item.thumbnailWebp ? (
-                            <source srcSet={item.thumbnailWebp} type="image/webp" />
-                          ) : null}
-                          <img
-                            src={item.thumbnail}
-                            alt={`${item.name} thumbnail`}
-                            loading="lazy"
-                            className="h-full w-full object-cover"
-                          />
-                        </picture>
-
-                        {/* Frosted glass style name overlay at bottom */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-md px-3 py-2.5 border-t border-white/10">
-                          <p className="text-xs font-bold text-white uppercase tracking-[0.15em] sm:text-sm">
-                            {item.name}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
+                    item={item}
+                    isClone={isClone}
+                    onUnavailable={hideItem}
+                  />
                 );
               })}
             </div>

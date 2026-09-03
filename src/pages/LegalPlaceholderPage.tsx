@@ -10,7 +10,7 @@ type LegalPlaceholderPageProps = {
 const LegalPlaceholderPage = ({ title, children }: LegalPlaceholderPageProps) => (
   <div className="min-h-screen bg-slate-950 text-white">
     <FounderNavigation />
-    <main className="mx-auto max-w-3xl space-y-8 px-6 py-16">
+    <main className="mx-auto max-w-3xl space-y-8 px-6 pt-36 pb-16">
       <div
         className="rounded-2xl border border-amber-400/40 bg-amber-500/10 px-5 py-4 text-sm text-amber-100"
         role="status"
@@ -21,11 +21,11 @@ const LegalPlaceholderPage = ({ title, children }: LegalPlaceholderPageProps) =>
       <div className="space-y-5 text-sm leading-7 text-white/75">{children}</div>
       <p className="text-xs text-white/40">
         <Link to="/privacy" className="underline underline-offset-4">
-          Privacy draft
+          Privacy
         </Link>
         {' · '}
         <Link to="/terms" className="underline underline-offset-4">
-          Terms draft
+          Terms
         </Link>
       </p>
     </main>

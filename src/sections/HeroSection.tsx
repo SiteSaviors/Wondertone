@@ -6,10 +6,10 @@ const HeroSection = () => {
   return (
     <section className="relative overflow-hidden bg-gradient-hero" data-founder-hero>
       <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/nice-snow.png')]" />
-      <Section className="py-24 lg:py-28 relative">
+      <Section className="relative !pt-36 !pb-24 lg:!pt-40 lg:!pb-28">
         <div className="mx-auto max-w-3xl space-y-8 text-center text-white">
-          <h1 className="text-4xl md:text-6xl font-semibold leading-tight drop-shadow-lg">
-            The photo you love, as art.
+          <h1 className="text-4xl md:text-6xl font-semibold leading-tight text-white drop-shadow-lg">
+            Turn Your Memories Into Museum Quality Art
           </h1>
           <p className="text-lg text-white/80 leading-relaxed">
             One upload. One style. No prompts.

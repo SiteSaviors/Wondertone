@@ -21,7 +21,7 @@
  * @see src/config/inspirationBuckets.ts (configuration)
  */
 
-import { memo, type CSSProperties } from 'react';
+import { memo, useState, type CSSProperties } from 'react';
 import type { StyleOption } from '@/store/founder/storeTypes';
 
 type InspirationCardProps = {
@@ -33,6 +33,7 @@ type InspirationCardProps = {
   prefersReducedMotion?: boolean;
   /** Whether the parent bucket should animate into view */
   revealReady?: boolean;
+  onThumbnailUnavailable?: (styleId: string) => void;
 };
 
 const InspirationCard = ({
@@ -40,6 +41,7 @@ const InspirationCard = ({
   cardIndex,
   prefersReducedMotion,
   revealReady = true,
+  onThumbnailUnavailable,
 }: InspirationCardProps) => {
   // Staggered cascade animation (0.08s per card)
   // Card 0: 0ms, Card 1: 80ms, Card 2: 160ms, etc.
@@ -54,6 +56,11 @@ const InspirationCard = ({
   };
 
   const cardStyle = { '--card-index': cardIndex } as CSSProperties;
+  const [missing, setMissing] = useState(!style.thumbnail);
+
+  if (missing) {
+    return null;
+  }
 
   return (
     <article
@@ -62,8 +69,7 @@ const InspirationCard = ({
       data-reduced-motion={prefersReducedMotion ? 'true' : 'false'}
       style={cardStyle}
     >
-      {/* Gold gradient border wrapper (2px outer shell) */}
-      <div className="relative p-[2px] rounded-2xl bg-gradient-to-br from-amber-400 via-yellow-500 to-amber-400">
+      <div className="relative rounded-2xl bg-slate-900">
         <button
           onClick={handleCardClick}
           className="relative w-full aspect-[4/5] overflow-hidden rounded-2xl bg-slate-900 transition-all duration-300 shadow-[0_4px_16px_rgba(0,0,0,0.3)] group-hover:shadow-[0_12px_32px_rgba(0,0,0,0.5)] group-hover:scale-[1.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
@@ -81,7 +87,11 @@ const InspirationCard = ({
             <img
               src={style.thumbnail}
               alt={style.name}
-              loading="lazy" // Native browser lazy loading (defers until near viewport)
+              loading="lazy"
+              onError={() => {
+                setMissing(true);
+                onThumbnailUnavailable?.(style.id);
+              }}
               className="w-full h-full object-cover"
             />
           </picture>

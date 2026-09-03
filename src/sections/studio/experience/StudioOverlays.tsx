@@ -9,20 +9,12 @@ import { useProductSurface } from '@/providers/ProductSurfaceProvider';
 const LivingCanvasModal = lazy(() => import('@/components/studio/LivingCanvasModal'));
 const DownloadUpgradeModal = lazy(() => import('@/components/modals/DownloadUpgradeModal'));
 const MobileStyleDrawer = lazy(() => import('@/components/studio/MobileStyleDrawer'));
-const CanvasUpsellToast = lazy(() => import('@/components/studio/CanvasUpsellToast'));
-const CanvasCheckoutModalLazy = lazy(() => import('@/components/studio/CanvasCheckoutModal'));
 const StockLibraryModal = lazy(() => import('@/components/studio/stock-library/StockLibraryModal'));
 
-type StudioOverlaysProps = {
-  onRequestCanvas: (source: 'center' | 'rail') => void;
-};
-
-const StudioOverlays = ({ onRequestCanvas }: StudioOverlaysProps) => {
+const StudioOverlays = () => {
   const {
     isDownloadUpgradeOpen,
     closeDownloadUpgrade,
-    isCanvasUpsellToastVisible,
-    hideCanvasUpsellToast,
     isMobileDrawerOpen,
     setMobileDrawerOpen,
   } = useStudioOverlayContext();
@@ -50,23 +42,6 @@ const StudioOverlays = ({ onRequestCanvas }: StudioOverlaysProps) => {
           remainingTokens={displayRemainingTokens}
           userTier={entitlements.tier}
         />
-      </Suspense>
-
-      <Suspense fallback={null}>
-        {!rules.hideCanvasRail && (
-          <CanvasUpsellToast
-            show={isCanvasUpsellToastVisible}
-            onDismiss={hideCanvasUpsellToast}
-            onCanvasClick={() => {
-              hideCanvasUpsellToast();
-              onRequestCanvas('rail');
-            }}
-          />
-        )}
-      </Suspense>
-
-      <Suspense fallback={null}>
-        {!rules.hideCanvasRail && <CanvasCheckoutModalLazy />}
       </Suspense>
 
       <Suspense fallback={null}>

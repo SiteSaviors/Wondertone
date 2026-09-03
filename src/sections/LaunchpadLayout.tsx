@@ -373,6 +373,14 @@ const LaunchflowAccordion = () => {
     []
   );
 
+  const hasVisibleChrome = Boolean(
+    launchpadExpanded ||
+      showResumeBanner ||
+      (launchpadSlimMode && croppedImage) ||
+      (showSuccessToast && croppedImage) ||
+      uploadedImage
+  );
+
   const orientationLabel = useMemo(
     () => ORIENTATION_PRESETS[orientation]?.label ?? 'Ready',
     [orientation]
@@ -420,10 +428,16 @@ const LaunchflowAccordion = () => {
   return (
     <section
       id="launchflow"
-      className="relative border-b border-white/5 bg-[radial-gradient(circle_at_top,rgba(49,72,139,0.28),transparent_55%)] pb-20 pt-16"
+      className={
+        hasVisibleChrome
+          ? 'relative border-b border-white/5 bg-[radial-gradient(circle_at_top,rgba(49,72,139,0.28),transparent_55%)] pb-12 pt-10'
+          : 'relative scroll-mt-32'
+      }
     >
       <div className="mx-auto flex max-w-[1400px] flex-col gap-4 px-6">
-        <SuccessToast show={showSuccessToast} onDismiss={() => setShowSuccessToast(false)} />
+        {Boolean(croppedImage) && (
+          <SuccessToast show={showSuccessToast} onDismiss={() => setShowSuccessToast(false)} />
+        )}
 
         {showResumeBanner && (
           <ResumeBanner
@@ -444,7 +458,7 @@ const LaunchflowAccordion = () => {
           />
         )}
 
-        {!launchpadExpanded && !launchpadSlimMode && (
+        {!launchpadExpanded && !launchpadSlimMode && Boolean(uploadedImage || croppedImage) && (
           <CollapsedTeaser onOpen={() => openLaunchflow('teaser')} />
         )}
 
@@ -488,11 +502,13 @@ const LaunchflowAccordion = () => {
         </div>
       </div>
 
-      <MobileLaunchflowFab
-        onClick={handleFabClick}
-        hasCroppedImage={Boolean(croppedImage)}
-        disabled={launchpadExpanded}
-      />
+      {Boolean(croppedImage) && (
+        <MobileLaunchflowFab
+          onClick={handleFabClick}
+          hasCroppedImage
+          disabled={launchpadExpanded}
+        />
+      )}
 
       <AuthGateModal />
     </section>

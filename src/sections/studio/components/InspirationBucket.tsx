@@ -50,6 +50,7 @@ type InspirationBucketProps = {
   prefersReducedMotion?: boolean;
   /** Whether the parent section is ready to reveal (intersection). */
   revealReady?: boolean;
+  onThumbnailUnavailable?: (styleId: string) => void;
 };
 
 /**
@@ -85,6 +86,7 @@ const InspirationBucket = ({
   index,
   prefersReducedMotion,
   revealReady = true,
+  onThumbnailUnavailable,
 }: InspirationBucketProps) => {
   const bucketStyle = { '--bucket-index': index } as CSSProperties;
 
@@ -134,6 +136,7 @@ const InspirationBucket = ({
             cardIndex={cardIndex}
             prefersReducedMotion={prefersReducedMotion}
             revealReady={revealReady}
+            onThumbnailUnavailable={onThumbnailUnavailable}
           />
         ))}
       </div>

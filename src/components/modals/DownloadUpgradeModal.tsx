@@ -63,8 +63,7 @@ export default function DownloadUpgradeModal({ isOpen, onClose }: DownloadUpgrad
             Get the full-resolution file.
           </h2>
           <p className="text-center text-white/70 mb-8">
-            The preview is display-only. The product is the full-resolution file of the revealed
-            artwork after entitlement.
+            The product is the full-resolution file of the revealed artwork.
           </p>
 
           <div className="space-y-3">

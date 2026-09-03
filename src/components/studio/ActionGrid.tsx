@@ -46,7 +46,7 @@ export function ActionGrid({
           </div>
           <div className="flex flex-1 flex-col text-left">
             <span className="text-sm font-semibold leading-tight">{fullResLabel}</span>
-            <span className="text-xs text-white/70">Preview is display-only</span>
+            <span className="text-xs text-white/70">Full-resolution file of this look</span>
           </div>
         </button>
       </div>

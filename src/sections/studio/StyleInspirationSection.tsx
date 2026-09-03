@@ -31,7 +31,7 @@
  * @see src/pages/StudioPage.tsx (integration point)
  */
 
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useStyleCatalogState } from '@/store/hooks/useStyleCatalogStore';
 import usePrefersReducedMotion from '@/hooks/usePrefersReducedMotion';
@@ -44,10 +44,20 @@ import './StyleInspirationSection.css';
 const StyleInspirationSection = () => {
   const { styles } = useStyleCatalogState();
   const prefersReducedMotion = usePrefersReducedMotion();
+  const [hiddenStyleIds, setHiddenStyleIds] = useState<Set<string>>(() => new Set());
   const [sectionRef, isSectionVisible] = useDeferredReveal<HTMLElement>({
     rootMargin: '0px 0px -80px 0px',
     disabled: prefersReducedMotion,
   });
+
+  const hideStyle = useCallback((styleId: string) => {
+    setHiddenStyleIds((current) => {
+      if (current.has(styleId)) return current;
+      const next = new Set(current);
+      next.add(styleId);
+      return next;
+    });
+  }, []);
 
   /**
    * Filter styles for each bucket (memoized to prevent expensive re-filtering)
@@ -71,7 +81,7 @@ const StyleInspirationSection = () => {
     return INSPIRATION_BUCKETS.map((bucket) => {
       const bucketStyles = bucket.styleIds
         .map((id) => styleMap.get(id)) // O(1) lookup
-        .filter((s): s is StyleOption => Boolean(s)) // Type guard: remove undefined
+        .filter((s): s is StyleOption => Boolean(s && s.thumbnail && !hiddenStyleIds.has(s.id)))
         .slice(0, 15); // 15 cards per bucket (3×5 grid)
 
       return {
@@ -79,7 +89,7 @@ const StyleInspirationSection = () => {
         styles: bucketStyles,
       };
     }).filter((bucket) => bucket.styles.length > 0); // Only show buckets with styles
-  }, [styles]);
+  }, [hiddenStyleIds, styles]);
 
   /**
    * Graceful degradation: Don't render if no buckets have styles
@@ -136,6 +146,7 @@ const StyleInspirationSection = () => {
               index={index}
               prefersReducedMotion={prefersReducedMotion}
               revealReady={isSectionVisible}
+              onThumbnailUnavailable={hideStyle}
             />
           ))}
         </div>

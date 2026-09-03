@@ -26,7 +26,7 @@ const StudioConfiguratorSkeleton = () => (
 );
 
 const MemorialHero = () => (
-  <section className="border-b border-white/10 bg-slate-950 px-6 py-16 sm:py-20">
+  <section className="border-b border-white/10 bg-slate-950 px-6 pt-36 pb-16 sm:pt-40 sm:pb-20">
     <div className="mx-auto max-w-3xl space-y-6 text-center">
       <h1 className="font-display text-4xl font-semibold tracking-tight text-white sm:text-5xl">
         Bring them back in art.
@@ -62,14 +62,13 @@ const MemorialPage = () => {
             <StudioConfiguratorLazy />
           </Suspense>
           <footer className="border-t border-white/10 px-6 py-8 text-center text-xs text-white/45">
-            <p>Memorial is a dedicated entrance. Preview is display-only.</p>
-            <p className="mt-2">
+            <p>
               <Link to="/privacy" className="underline underline-offset-4">
-                Privacy draft
+                Privacy
               </Link>
               {' · '}
               <Link to="/terms" className="underline underline-offset-4">
-                Terms draft
+                Terms
               </Link>
             </p>
           </footer>

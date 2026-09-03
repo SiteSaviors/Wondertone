@@ -42,7 +42,7 @@ export const getProductSurfaceRules = (surface: ProductSurface = activeSurface):
   if (surface === 'memorial') {
     return {
       hideStockLibrary: true,
-      hideCanvasRail: true,
+      hideCanvasRail: false,
       hideLivingCanvas: true,
       hideTokenPacks: true,
       hideSubscriptionTiers: true,
@@ -55,7 +55,7 @@ export const getProductSurfaceRules = (surface: ProductSurface = activeSurface):
 
   return {
     hideStockLibrary: false,
-    hideCanvasRail: true,
+    hideCanvasRail: false,
     hideLivingCanvas: true,
     hideTokenPacks: true,
     hideSubscriptionTiers: true,

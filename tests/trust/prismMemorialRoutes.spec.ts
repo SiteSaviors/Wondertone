@@ -35,6 +35,11 @@ describe('memorial, legal shells, and SPA routing', () => {
     expect(shell).toMatch(/Unsigned draft/i);
     expect(shell).toMatch(/not in force/i);
     expect(shell).toMatch(/not legal advice/i);
+    expect(shell).not.toContain('Privacy draft');
+    expect(shell).not.toContain('Terms draft');
+    expect(shell).toContain('to="/privacy"');
+    expect(shell).toContain('to="/terms"');
+    expect(shell).toContain('pt-36');
     expect(privacy).toMatch(/Route shell only/i);
     expect(privacy).toMatch(/not a privacy policy/i);
     expect(privacy).not.toMatch(/stays private always/i);
@@ -60,6 +65,7 @@ describe('memorial, legal shells, and SPA routing', () => {
     expect(memorial).toContain('Upload a photo. Choose a style. See them again. No prompts.');
     expect(memorial).toContain('Upload a photo.');
     expect(memorial).not.toContain('The photo you love, as art.');
+    expect(memorial).not.toContain('Turn Your Memories Into Museum Quality Art');
     expect(memorial).not.toContain('One upload. One style. No prompts.');
     const uploader = readRepoFile('src/components/launchpad/PhotoUploader.tsx');
     expect(uploader).toContain('Upload a photo of someone you lost');
@@ -69,6 +75,13 @@ describe('memorial, legal shells, and SPA routing', () => {
     expect(memorial).not.toMatch(/★|stars|press/i);
     expect(memorial).not.toContain('InstantBreadthStrip');
     expect(memorial).not.toContain('Browse Our Library');
+    expect(memorial).not.toContain('Memorial is a dedicated entrance');
+    expect(memorial).not.toContain('Preview is display-only');
+    expect(memorial).not.toContain('Privacy draft');
+    expect(memorial).not.toContain('Terms draft');
+    expect(memorial).toContain('to="/privacy"');
+    expect(memorial).toContain('to="/terms"');
+    expect(memorial).toContain('pt-36');
     expect(readRepoFile('src/config/productSurface.ts')).toMatch(/hideStockLibrary:\s*true/);
     expect(uploader).toContain('hideStockLibrary');
     expect(uploader.indexOf('!rules.hideStockLibrary')).toBeLessThan(uploader.indexOf('Browse Our Library'));

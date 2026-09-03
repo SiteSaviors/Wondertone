@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { CheckCircle2, UploadCloud, Images, Crop, Bookmark, BookmarkCheck } from 'lucide-react';
+import { UploadCloud, Images, Crop, Bookmark, BookmarkCheck } from 'lucide-react';
 import type { EntitlementState, StylePreviewStatus, StyleOption } from '@/store/founder/storeTypes';
 // Orientation type no longer needed in this module
 import { ORIENTATION_PRESETS } from '@/utils/smartCrop';
@@ -43,40 +43,6 @@ const LazyGalleryQuickview = () => {
     </div>
   );
 };
-
-const SellingPointsPanel = ({ onCreateCanvas }: { onCreateCanvas: () => void }) => (
-  <div className="rounded-[32px] border border-white/12 bg-slate-950/65 px-8 py-10 shadow-[0_24px_80px_rgba(8,14,32,0.5)] backdrop-blur">
-    <div className="flex flex-col gap-6 text-left md:flex-row md:items-center md:justify-between">
-      <div className="space-y-4 md:max-w-md">
-        <p className="text-xs uppercase tracking-[0.38em] text-white/45">Museum-Quality Art</p>
-        <h3 className="font-display text-2xl font-semibold tracking-tight text-white">
-          Crafted to last a lifetime
-        </h3>
-        <ul className="space-y-4 text-sm text-white/75">
-          <li className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-300" />
-            <span>Hand-stretched on gallery-grade frames with archival inks.</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-300" />
-            <span>Protective packaging and tracking.</span>
-          </li>
-          <li className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-300" />
-            <span>100% satisfaction guarantee—every canvas reprinted if needed.</span>
-          </li>
-        </ul>
-      </div>
-      <button
-        type="button"
-        onClick={onCreateCanvas}
-        className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-purple-500 via-purple-500 to-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-glow-purple transition hover:shadow-glow-purple/70"
-      >
-        Create Canvas
-      </button>
-    </div>
-  </div>
-);
 
 export type CanvasPreviewPanelProps = {
   overlayStyleName: string;
@@ -169,7 +135,13 @@ const CanvasPreviewPanel = ({
   const orientationSubtitle = `${orientationMeta.label} • Adjust crop`;
 
   return (
-    <main className="w-full lg:flex-1 lg:min-w-0 px-4 py-6 lg:px-6 lg:py-8 lg:sticky lg:top-[57px] lg:h-[calc(100vh-57px)] lg:overflow-y-auto flex flex-col items-center justify-start">
+    <main
+      className={
+        hasCroppedImage
+          ? 'w-full lg:flex-1 lg:min-w-0 px-4 py-6 lg:px-6 lg:py-8 lg:sticky lg:top-[57px] lg:h-[calc(100vh-57px)] lg:overflow-y-auto flex flex-col items-center justify-start'
+          : 'w-full lg:flex-1 lg:min-w-0 px-4 py-6 lg:px-6 lg:py-8 flex flex-col items-center justify-start'
+      }
+    >
       <div className="w-full max-w-[720px] mx-auto">
         {previewLocked && (
           <div
@@ -344,11 +316,7 @@ const CanvasPreviewPanel = ({
         </div>
       )}
 
-      {!rules.hideCanvasRail && previewStateStatus === 'ready' && currentStyle && (
-        <div className="w-full max-w-[720px] mt-8">
-          <SellingPointsPanel onCreateCanvas={onCreateCanvas} />
-        </div>
-      )}
+      {/* Canvas purchase stays off. The right rail and in-room preview are display-only. */}
 
       {/* Center-rail story/narrative modules intentionally omitted */}
     </main>

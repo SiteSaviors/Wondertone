@@ -14,7 +14,9 @@ describe('Prism canonical site completeness', () => {
     expect(landing).toContain('HeroSection');
     expect(landing).not.toContain('MemorialPage');
     expect(landing).not.toContain('Bring them back in art.');
-    expect(hero).toContain('The photo you love, as art.');
+    expect(hero).toContain('Turn Your Memories Into Museum Quality Art');
+    expect(hero).toContain('text-white');
+    expect(hero).not.toContain('bg-clip-text text-transparent');
     expect(hero).toContain('One upload. One style. No prompts.');
     expect(hero).toContain('Upload a photo.');
     expect(hero).toContain('to="/create"');
@@ -23,6 +25,7 @@ describe('Prism canonical site completeness', () => {
     expect(memorial).toContain('Bring them back in art.');
     expect(memorial).not.toContain('Your photo. A style. Art you actually want.');
     expect(memorial).not.toContain('The photo you love, as art.');
+    expect(memorial).not.toContain('Turn Your Memories Into Museum Quality Art');
   });
 
   it('sends homepage style cards into /create with that style selected', () => {
@@ -54,12 +57,15 @@ describe('Prism canonical site completeness', () => {
     expect(nav).not.toContain("to: '/pricing'");
     expect(nav).not.toContain("to: '/gift'");
     const title = readRepoFile('index.html');
-    expect(title).toContain('Wondertone | The photo you love, as art.');
+    expect(title).toContain('Wondertone | Turn Your Memories Into Museum Quality Art');
     expect(title).not.toContain('Your photo. A style. Art you actually want.');
     expect(title).not.toMatch(/Transform Your Memories|AI-Powered Canvas|Living Canvas/i);
     expect(title).not.toMatch(/\$\d|4\.9|10,000/);
     const pricing = readRepoFile('src/pages/PricingPage.tsx');
     expect(pricing).toContain('Memberships and token packs are not for sale.');
+    expect(pricing).toContain('to="/create"');
+    expect(pricing).not.toMatch(/parked|tonight/i);
+    expect(pricing).toContain('pt-36');
     expect(pricing).not.toMatch(/\$7\.99|\$19\.99|\$49\.99/);
     const account = readRepoFile('src/components/navigation/AccountDropdown.tsx');
     expect(account).toContain('hideSubscriptionTiers');
@@ -115,22 +121,34 @@ describe('Prism canonical site completeness', () => {
     const breadth = readRepoFile('src/sections/studio/InstantBreadthStrip.tsx');
 
     expect(surface).toMatch(/hideLivingCanvas:\s*true/);
-    expect(surface).not.toMatch(/hideCanvasRail:\s*false/);
+    expect(surface).toMatch(/hideCanvasRail:\s*false/);
     expect(surface).not.toMatch(/hideTokenPacks:\s*false/);
     expect(surface).not.toMatch(/hideSubscriptionTiers:\s*false/);
     expect(surface).not.toMatch(/hideSocialProof:\s*false/);
     expect(actionGrid).toContain('revealed_artwork_full_res');
     expect(actionGrid).not.toContain('Create Canvas Art');
+    const overlays = readRepoFile('src/sections/studio/experience/StudioOverlays.tsx');
+    const studioPage = readRepoFile('src/pages/StudioPage.tsx');
+    const experience = readRepoFile('src/sections/studio/experience/StudioExperience.tsx');
+    expect(experience).toContain('RightRail');
+    expect(experience).toContain('!rules.hideCanvasRail');
+    expect(overlays).not.toContain('CanvasCheckoutModal');
+    expect(overlays).not.toContain('CanvasUpsellToast');
+    expect(studioPage).not.toContain('CanvasQualityStrip');
     expect(nav).not.toContain('OrdersPopover');
     expect(orders).not.toMatch(/Orders API coming soon/i);
     expect(breadth).not.toContain('/pricing');
+    expect(breadth).not.toContain('from-amber-400 via-yellow-500 to-amber-400');
+    expect(breadth).toContain('onUnavailable');
+    expect(breadth).not.toContain('Preview is display-only');
     expect(breadth).not.toContain('Upgrade to Creator');
     expect(breadth).not.toContain('print on museum-quality canvas');
     expect(breadth).not.toContain('Prints ship ready to hang');
     expect(breadth).not.toContain('50+');
     const createHero = readRepoFile('src/sections/ProductHeroSection.tsx');
-    expect(createHero).toContain('The photo you love,');
-    expect(createHero).toContain('as art.');
+    expect(createHero).toContain('Turn Your Memories Into Museum Quality Art');
+    expect(createHero).not.toContain('bg-clip-text text-transparent');
+    expect(createHero).toContain('animateGeneration={false}');
     expect(createHero).not.toContain('Your photo. A style.');
     expect(createHero).not.toContain('Art you actually want.');
     expect(createHero).not.toContain('40+');
@@ -167,6 +185,10 @@ describe('Prism canonical site completeness', () => {
       styleCard.indexOf('Unlock with {gate.requiredTier.toUpperCase()} plan')
     );
     expect(empty).toContain('hideStockLibrary');
+    expect(empty).not.toContain('Bring them back in art.');
+    expect(empty).not.toContain('Upload Any Photo Into Wondertone Studio');
+    expect(launchpad).toContain('Boolean(croppedImage)');
+    expect(styleCard).toContain('onError={() => setThumbnailMissing(true)}');
     expect(preview).toContain("previewStateStatus === 'ready' && currentStyle");
     expect(preview.indexOf("previewStateStatus === 'ready' && currentStyle")).toBeLessThan(
       preview.indexOf('<ActionGrid')

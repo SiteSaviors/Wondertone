@@ -45,7 +45,7 @@ describe('Forge creation journey', () => {
   it('keeps first-path hide flags and the entitlement lock', () => {
     const surface = readRepoFile('src/config/productSurface.ts');
     const studio = surface.slice(surface.indexOf('hideStockLibrary: false'));
-    expect(studio).toMatch(/hideCanvasRail:\s*true/);
+    expect(studio).toMatch(/hideCanvasRail:\s*false/);
     expect(studio).toMatch(/hideTokenPacks:\s*true/);
     expect(studio).toMatch(/hideSubscriptionTiers:\s*true/);
     expect(studio).toMatch(/hideSocialProof:\s*true/);

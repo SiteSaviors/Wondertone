@@ -196,7 +196,9 @@ export default function ToneSection({
               exit={prefersReducedMotion ? undefined : 'initial'}
               transition={prefersReducedMotion ? undefined : toneCardStagger}
             >
-              {styles.map((styleEntry) => (
+              {styles
+                .filter((styleEntry) => Boolean(styleEntry.option.thumbnail))
+                .map((styleEntry) => (
                 <motion.div key={styleEntry.option.id} variants={toneCardVariants}>
                   <ToneStyleCard
                     styleEntry={styleEntry}
@@ -210,11 +212,6 @@ export default function ToneSection({
                   />
                 </motion.div>
               ))}
-              {styles.length === 0 && (
-                <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-5 text-sm text-white/55">
-                  No styles in this tone yet. Check back soon.
-                </div>
-              )}
             </motion.div>
           </motion.div>
         )}

@@ -12,6 +12,7 @@ type GeneratingCanvasAnimationProps = {
   videoSrc?: string;
   posterImage?: string;
   generationDuration?: number;
+  animateGeneration?: boolean;
   className?: string;
   onGenerationComplete?: () => void;
 };
@@ -24,10 +25,13 @@ const GeneratingCanvasAnimation = ({
   videoSrc,
   posterImage,
   generationDuration = 2500,
+  animateGeneration = true,
   className = '',
   onGenerationComplete,
 }: GeneratingCanvasAnimationProps) => {
-  const [phase, setPhase] = useState<'loading' | 'generating' | 'complete'>('loading');
+  const [phase, setPhase] = useState<'loading' | 'generating' | 'complete'>(
+    animateGeneration ? 'loading' : 'complete'
+  );
   const [hasPlayed, setHasPlayed] = useState(false);
   const [showingOriginal, setShowingOriginal] = useState(false);
   const [showHint, setShowHint] = useState(true);
@@ -35,7 +39,7 @@ const GeneratingCanvasAnimation = ({
   const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
-    if (prefersReducedMotion) {
+    if (!animateGeneration || prefersReducedMotion) {
       setPhase('complete');
       setHasPlayed(true);
       return;
@@ -63,7 +67,7 @@ const GeneratingCanvasAnimation = ({
       window.clearTimeout(loadingTimer);
       window.clearTimeout(completeTimer);
     };
-  }, [videoSrc, generationDuration, onGenerationComplete, prefersReducedMotion]);
+  }, [animateGeneration, videoSrc, generationDuration, onGenerationComplete, prefersReducedMotion]);
 
   useEffect(() => {
     if (phase === 'complete' && originalImage) {
